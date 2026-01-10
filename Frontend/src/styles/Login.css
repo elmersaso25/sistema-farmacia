@@ -1,0 +1,16 @@
+#Login{
+    background-image: url('../assets/fondoLogin.jpg');
+
+    /* Ajustes para que se vea bien */
+  background-size: cover;      
+  background-position: center; 
+  background-repeat: no-repeat; 
+  height: 100vh; 
+}
+
+#Login-card {
+  background-color: rgba(255, 255, 255, 0.6); /* blanco con transparencia */
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}

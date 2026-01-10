@@ -1,0 +1,28 @@
+/* Efecto hover para los links del navbar */
+.navbar .nav-link {
+  color: #fff !important;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Efecto de subrayado animado */
+.navbar .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #fff;
+  transition: width 0.3s ease;
+}
+
+/* Cuando pasas el mouse */
+.navbar .nav-link:hover {
+  color: #fef100 !important; 
+  transform: scale(1.05);
+}
+
+.navbar .nav-link:hover::after {
+  width: 100%;
+}
