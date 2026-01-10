@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Proyecto de Farmacia - React + Node.js
 
 ## Descripción
@@ -17,3 +18,7 @@ Permite gestionar productos, clientes, ventas y reportes.
 cd backend
 npm install
 npm start
+=======
+# sistema-farmacia
+Sistema web ventas para farmacia (en desarrollo)
+>>>>>>> d726c54b1de51205f0f73283b7e1dcb287bd7c0d
