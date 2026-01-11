@@ -118,7 +118,7 @@ function RegistrarProveedores() {
                                 </div>
                             </div>
 
-                             <div className="row mb-3 align-items-center">
+                            <div className="row mb-3 align-items-center">
                                 <label className="col-sm-4 col-form-label">Teléfono</label>
                                 <div className="col-sm-8">
                                     <input type="tel"
@@ -127,10 +127,56 @@ function RegistrarProveedores() {
                                         onChange={handleChange}
                                         className="form-control"
                                         required />
-                                    {errores.celular && (
+                                    {errores.telefono && (
                                         <small className="text-danger">{errores.telefono}</small>
                                     )}
                                 </div>
+                            </div>
+
+                            <div className="row mb-3 align-items-center">
+                                <label className="col-sm-4 col-form-label">Correo Electrónico</label>
+                                <div className="col-sm-8">
+                                    <input type="email"
+                                        name="correo"
+                                        value={formData.correo}
+                                        onChange={handleChange}
+                                        className="form-control"
+                                        required />
+                                    {errores.correo && (
+                                        <small className="text-danger">{errores.correo}</small>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="row mb-3 align-items-center">
+                                <label className="col-sm-4 col-form-label">Nit</label>
+                                <div className="col-sm-8">
+                                    <input type="text"
+                                        name="nit"
+                                        value={formData.nit}
+                                        onChange={handleChange}
+                                        className="form-control"
+                                        required />
+                                    {errores.nit && (
+                                        <small className="text-danger">{errores.nit}</small>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="row mb-3 align-items-center">
+                                <label className="col-sm-4 col-form-label">Dirección</label>
+                                <div className="col-sm-8">
+                                    <input type="text"
+                                        name="direccion"
+                                        value={formData.direccion}
+                                        onChange={handleChange}
+                                        className="form-control"
+                                        required />
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <button className="btn btn-primary">Registrar</button>
                             </div>
                         </form>
                     </div>
