@@ -150,8 +150,52 @@ const actualizarProveedores = async (req, res) => {
         });
 
     } catch (error) {
-         console.error("Error al actualizar:", error);
+        console.error("Error al actualizar:", error);
         res.status(500).json({ message: "Error al actualizar proveedor" });
+    }
+}
+
+//Funcion cambiar estado del proveedor
+const cambiarEstado = async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    //validacion
+    const estadosValidos = ["Activo", "Inactivo"];
+    if (!estadosValidos.includes(estado)) {
+        return res.status(400).json({
+            ok: false,
+            message: "El estado debe ser 'Activo' o 'Inactivo'"
+        });
+    }
+
+    try {
+        const [usuario] = await pool.query(
+            "SELECT idProveedor FROM proveedores WHERE idProveedor = ?",
+            [id]
+        )
+
+        if (usuario.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: "Proveedor no encontrado"
+            });
+        }
+
+        // Cambiar estado
+        await pool.query(
+            "UPDATE proveedores SET estado = ? WHERE idProveedor = ?",
+            [estado, id]
+        );
+
+        res.json({
+            ok: true,
+            message: `Estado cambiado a ${estado}`
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ ok: false, message: "Error en el servidor" });
     }
 }
 
@@ -169,4 +213,4 @@ const obtenerTotalProveedores = async (req, res) => {
 }
 
 
-module.exports = { obtenerProveedores, obtenerProveedoresPorId, registrarProveedores, actualizarProveedores, obtenerTotalProveedores }
+module.exports = { obtenerProveedores, obtenerProveedoresPorId, registrarProveedores, actualizarProveedores, cambiarEstado ,obtenerTotalProveedores }

@@ -96,7 +96,58 @@ function Proveedores() {
         },
     };
 
-    //Funcion cambiar estado PENDIENTE
+    //Funcion cambiar estado 
+const cambiarEstado = async (idProveedor) => {
+  const proveedor = proveedores.find(u => u.idProveedor === idProveedor);
+  if (!proveedor) return;
+
+  const nuevoEstado = proveedor.estado === "Activo" ? "Inactivo" : "Activo";
+
+  // Confirmación con SweetAlert
+  const result = await Swal.fire({
+    title: "¿Estás seguro?",
+    text: `El proveedor pasará a estado: ${nuevoEstado}`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, cambiar",
+    cancelButtonText: "Cancelar"
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await fetch(`http://localhost:3000/proveedores/${idProveedor}/estado`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+
+    if (!response.ok) throw new Error("Error al cambiar estado");
+
+    // Actualiza react localmente
+    setProveedores(prev =>
+      prev.map(u =>
+        u.idProveedor === idProveedor ? { ...u, estado: nuevoEstado } : u
+      )
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Estado actualizado",
+      text: `El proveedor ahora está ${nuevoEstado}`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo cambiar el estado"
+    });
+  }
+};
 
 
     return (
