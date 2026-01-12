@@ -199,7 +199,7 @@ const cambiarEstado = async (req, res) => {
     }
 }
 
-//Funcion obtener total proveedores registrados
+//Funcion obtener total proveedores registrados//
 const obtenerTotalProveedores = async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT COUNT(*) AS totalProveedores FROM proveedores;");

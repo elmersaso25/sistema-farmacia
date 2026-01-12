@@ -6,6 +6,7 @@ router.get('/totalProveedores', obtenerTotalProveedores);
 router.get('/', obtenerProveedores);
 router.get('/:id', obtenerProveedoresPorId);
 
+//Otras rutas//
 router.post('/registrar', registrarProveedores);
 router.put('/actualizar/:id', actualizarProveedores);
 router.patch('/:id/estado', cambiarEstado);
