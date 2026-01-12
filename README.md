@@ -11,14 +11,17 @@ Permite gestionar productos, clientes, ventas y reportes.
 - Base de datos: MySQL
 - Control de versiones: Git y GitHub
 
-## Instalación
-
 ### Backend
+#### Requisitos
+- Node.js
+- npm
+
+#### Instalación y ejecución
 ```bash
 cd backend
 npm install
-npm start
+npm run dev
+
 =======
 # sistema-farmacia
 Sistema web ventas para farmacia (en desarrollo)
->>>>>>> d726c54b1de51205f0f73283b7e1dcb287bd7c0d
