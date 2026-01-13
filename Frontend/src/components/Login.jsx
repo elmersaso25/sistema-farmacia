@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import "../styles/Login.css"
 import Swal from "sweetalert2";
@@ -8,6 +8,13 @@ function Login() {
   const [password, setPassword] = useState('');
   const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/panelPrincipal", { replace: true });
+    }
+  }, [navigate]);
 
 
  const handleLogin = async (e) => {
@@ -40,7 +47,7 @@ function Login() {
         showConfirmButton: false,
       });
 
-      navigate("/panelPrincipal");
+      navigate("/panelPrincipal",  { replace: true });
     } else {
       Swal.fire({
         icon: "error",

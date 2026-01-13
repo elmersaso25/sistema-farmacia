@@ -4,7 +4,6 @@ import PanelPrincipal from './components/PanelPrincipal';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Usuarios from './components/Usuarios';
-import RegistrarUsuario from './components/RegistrarUsuarios';
 import RegistrarUsuarios from './components/RegistrarUsuarios';
 import ModificarUsuarios from './components/ModificarUsuarios';
 import Medicamentos from './components/Medicamentos';
