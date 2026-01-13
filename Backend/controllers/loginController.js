@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const pool = require('../db');
 
-const SECRET_KEY = 'mi_clave_secreta';  // En producción, usa una variable de entorno para esto
+const SECRET_KEY = process.env.JWT_SECRET;
+
 
 const login = async (req, res) => {
   const { correo, contrasenia } = req.body;
