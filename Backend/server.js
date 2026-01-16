@@ -9,6 +9,7 @@ const usuarioRoute = require('./routes/usuarioRoute');
 const medicamentoRoute = require('./routes/medicamentoRoute');
 const clienteRoute = require('./routes/clienteRoute');
 const proveedorRoute = require('./routes/proveedorRoute');
+const compraRoute = require('./routes/compraRoute');
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use('/clientes', clienteRoute);
 
 //Ruta de proveedores
 app.use('/proveedores', proveedorRoute);
+
+//Ruta de compras
+app.use('/compras', compraRoute);
 
 // Puerto
 const PORT = process.env.PORT || 3000;

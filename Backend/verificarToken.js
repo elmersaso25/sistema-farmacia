@@ -1,25 +1,22 @@
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = 'mi_clave_secreta'; 
+const SECRET_KEY = process.env.JWT_SECRET;
 
-// Middleware para verificar el token JWT
 const verificarToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
 
-    const token = req.headers['authorization'];
-
-  if (!token) {
-    return res.status(403).json({ mensaje: 'No se proporcionó un token' });
-  }
-
-  // Verificar el token usando jwt.verify
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ mensaje: 'Token no válido' });
+    if (!token) {
+        return res.status(403).json({ mensaje: 'Token requerido' });
     }
 
-    // Si el token es válido, pasamos la información del usuario al siguiente middleware o ruta
-    req.user = decoded;
-    next();
-  });
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        // Asignamos solo lo que necesitamos
+        req.usuario = { idUsuario: decoded.idUsuario };
+        next();
+    } catch (error) {
+        return res.status(401).json({ mensaje: 'Token inválido o expirado' });
+    }
 };
 
-module.exports = { verificarToken };
+module.exports = verificarToken;

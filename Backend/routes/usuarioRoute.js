@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { obtenerUsuarios, obtenerUsuariosPorId, registrarUsuarios,actualizarUsuarios, cambiarEstado, obtenerTotalUsuarios } = require("../controllers/usuarioController");
+const verificarToken = require('../verificarToken');
 
-router.get('/totalUsuarios', obtenerTotalUsuarios);
-router.get('/:id', obtenerUsuariosPorId);
-router.get('/', obtenerUsuarios);
-router.post('/registrar', registrarUsuarios );
-router.put('/actualizar/:id', actualizarUsuarios );
-router.patch('/:id/estado', cambiarEstado);
+const { obtenerUsuarios, obtenerUsuariosPorId, registrarUsuarios, actualizarUsuarios, cambiarEstado, obtenerTotalUsuarios } = require("../controllers/usuarioController");
+
+// Todas protegidas con token
+router.get('/totalUsuarios', verificarToken, obtenerTotalUsuarios);
+router.get('/:id', verificarToken, obtenerUsuariosPorId);
+router.get('/', verificarToken, obtenerUsuarios);
+router.post('/registrar', verificarToken, registrarUsuarios);
+router.put('/actualizar/:id', verificarToken, actualizarUsuarios);
+router.patch('/:id/estado', verificarToken, cambiarEstado);
 
 module.exports = router;

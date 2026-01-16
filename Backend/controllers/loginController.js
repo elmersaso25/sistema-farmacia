@@ -19,11 +19,11 @@ const login = async (req, res) => {
 
     // Verificar si el usuario está inactivo
     if (usuario.estado !== "Activo") {
-        return res.status(403).json({
-            mensaje: "El usuario está inactivo. Contacte al administrador."
-        });
+      return res.status(403).json({
+        mensaje: "El usuario está inactivo. Contacte al administrador."
+      });
     }
-    
+
     // Comparar la contraseña proporcionada con el hash almacenado en la base de datos
     const coincide = await bcrypt.compare(contrasenia, usuario.contrasenia);
 
@@ -33,15 +33,20 @@ const login = async (req, res) => {
 
     // Generar el token JWT si las credenciales son correctas
     const token = jwt.sign(
-      { id: usuario.id, nombreCompleto: usuario.nombreCompleto },
-      SECRET_KEY, 
+      {
+        idUsuario: usuario.idUsuario,
+        nombreCompleto: usuario.nombreCompleto
+      },
+      SECRET_KEY,
       { expiresIn: '1h' } // El token expirará en 1 hora
     );
 
     // Enviar el token como respuesta
-    res.json({ mensaje: 'Login exitoso',
+    res.json({
+      mensaje: 'Login exitoso',
       usuario: usuario.nombreCompleto,
-    token });
+      token
+    });
 
   } catch (error) {
     console.error('Error en login:', error);
