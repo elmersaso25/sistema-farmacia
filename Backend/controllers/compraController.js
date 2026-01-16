@@ -1,6 +1,21 @@
 const pool = require("../db");
 
+
 //Funcion obtener compras
+const obtenerCompras = async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT c.noCompra, c.noFactura, c.fechaCompra, p.nombreProveedor, c.totalCompra, c.estadoCompra, c.observaciones FROM compras c INNER JOIN proveedores p ON c.idProveedor = p.idProveedor ORDER BY c.noCompra DESC;");
+        res.status(200).json(rows)
+    } catch (error) {
+        console.error("Error al obtener compras", error);
+        res.status(500).json({ mensaje: "Error al obtener compras" });
+    }
+}
+
+
+
+
+//Funcion registrar compras
 const registrarCompras = async (req, res) => {
     const { idProveedor, observaciones, detalles } = req.body;
     const idUsuario = req.usuario.idUsuario;
@@ -131,4 +146,4 @@ const registrarCompras = async (req, res) => {
     }
 };
 
-module.exports = { registrarCompras };
+module.exports = { obtenerCompras, registrarCompras };
