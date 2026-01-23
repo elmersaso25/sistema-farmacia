@@ -46,7 +46,7 @@ function Navbar() {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-white" to="#">
+                <Link className="nav-link text-white" to="/compras">
                   <i className="fas fa-shopping-bag"></i> Compras
                 </Link>
               </li>
