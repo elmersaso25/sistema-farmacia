@@ -9,6 +9,7 @@ function PanelPrincipal() {
   const [totalMedicamentos, setTotalMedicamentos] = useState(0);
   const [totalClientes, setTotalClientes] = useState(0);
   const [totalProveedores, setTotalProveedores] = useState(0);
+  const [totalCompras, setTotalCompras] = useState(0);
 
 
 
@@ -73,6 +74,22 @@ function PanelPrincipal() {
   }, [])
 
 
+  //Fetch para obtener total compras
+  useEffect(() => {
+    const obtenerTotalCompras = async (req, res) => {
+      try {
+        const res = await fetch("http://localhost:3000/compras/totalCompras");
+        const data = await res.json();
+        setTotalCompras(data.totalCompras);
+      }
+      catch (error) {
+        console.error("Error al obtener total compras:", error);
+      }
+    }
+    obtenerTotalCompras();
+  }, [])
+
+
   return (
     <div className="container">
       <div className="dashboard p-4 mt-5">
@@ -122,7 +139,7 @@ function PanelPrincipal() {
             <div className="card dashboard-card bg-primary text-white shadow-sm">
               <div className="card-body">
                 <h5><i className="fa-solid fa-shopping-bag me-2"></i>Compras</h5>
-                <h2>45</h2>
+                <h2>{totalCompras}</h2>
               </div>
             </div>
           </div>

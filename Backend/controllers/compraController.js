@@ -146,4 +146,20 @@ const registrarCompras = async (req, res) => {
     }
 };
 
-module.exports = { obtenerCompras, registrarCompras };
+//Funcion anular compra
+
+
+//Funcion mostrar total de compras
+const obtenerTotalCompras = async (req,res) => {
+     try {
+        const [rows] = await pool.query("SELECT COUNT(*) AS totalCompras FROM compras;");
+        res.json({
+            totalCompras: rows[0].totalCompras
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener el total de compras" });
+
+    }
+}
+
+module.exports = { obtenerCompras, registrarCompras, obtenerTotalCompras };
