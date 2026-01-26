@@ -15,6 +15,17 @@ const obtenerProveedores = async (req, res) => {
     }
 }
 
+//Funcion obtener proveedores activos
+const obtenerProveedoresActivos = async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT idProveedor, nombreProveedor FROM proveedores WHERE estado='Activo';");
+        res.status(200).json(rows);
+    } catch (error) {
+         console.error("Error al obtener proveedores Activos", error);
+        res.status(500).json({ mensaje: "Error al obtener proveedores activos" });
+    }
+}
+
 //Funcion obtener proveedor por id
 const obtenerProveedoresPorId = async (req, res) => {
     const { id } = req.params;
@@ -213,4 +224,4 @@ const obtenerTotalProveedores = async (req, res) => {
 }
 
 
-module.exports = { obtenerProveedores, obtenerProveedoresPorId, registrarProveedores, actualizarProveedores, cambiarEstado ,obtenerTotalProveedores }
+module.exports = { obtenerProveedores, obtenerProveedoresActivos, obtenerProveedoresPorId, registrarProveedores, actualizarProveedores, cambiarEstado, obtenerTotalProveedores }

@@ -13,8 +13,6 @@ const obtenerCompras = async (req, res) => {
 }
 
 
-
-
 //Funcion registrar compras
 const registrarCompras = async (req, res) => {
     const { idProveedor, observaciones, detalles } = req.body;
@@ -146,7 +144,46 @@ const registrarCompras = async (req, res) => {
     }
 };
 
-//Funcion anular compra
+
+// Funcion obtener datos iniciales
+const obtenerDatosIniciales = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        MAX(noCompra) AS ultimaCompra,
+        MAX(noFactura) AS ultimaFactura
+      FROM compras
+    `);
+
+    const ultimaCompra = rows[0].ultimaCompra || 0;
+    const ultimaFactura = rows[0].ultimaFactura; // puede ser NULL
+
+    let siguienteNumeroFactura = 1;
+
+    if (ultimaFactura) {
+      // Formato esperado: A-2026-00001
+      const partes = ultimaFactura.split("-");
+      const numero = parseInt(partes[2], 10);
+      siguienteNumeroFactura = numero + 1;
+    }
+
+    const anioActual = new Date().getFullYear();
+    const noFacturaFormateada = `A-${anioActual}-${String(siguienteNumeroFactura).padStart(5, "0")}`;
+
+    res.json({
+      siguienteCompra: ultimaCompra + 1,
+      siguienteFactura: noFacturaFormateada,
+      fechaCompra: new Date().toISOString().split("T")[0]
+    });
+  } catch (error) {
+    console.error("Error en obtenerDatosIniciales:", error);
+    res.status(500).json({
+      mensaje: "Error al obtener datos iniciales de compra"
+    });
+  }
+};
+
+
 
 
 //Funcion mostrar total de compras
@@ -162,4 +199,4 @@ const obtenerTotalCompras = async (req,res) => {
     }
 }
 
-module.exports = { obtenerCompras, registrarCompras, obtenerTotalCompras };
+module.exports = { obtenerCompras, registrarCompras, obtenerDatosIniciales, obtenerTotalCompras };
