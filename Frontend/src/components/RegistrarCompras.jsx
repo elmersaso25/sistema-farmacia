@@ -3,6 +3,8 @@ import { Navigate, Link, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import Swal from "sweetalert2";
 import "../styles/Compras.css";
+import Modal from "../components/Modal";
+
 
 
 function RegistrarCompras() {
@@ -15,6 +17,8 @@ function RegistrarCompras() {
   const [detalles, setDetalles] = useState([]);
 const [proveedores, setProveedores] = useState([]);
 const [idProveedor, setIdProveedor] = useState("");
+const [openModal, setOpenModal] = useState(false);
+
 
 
   const columns = [
@@ -89,6 +93,8 @@ const [idProveedor, setIdProveedor] = useState("");
     });
   };
 
+ 
+
   return (
     <div className="container-custom">
       <div className="form-altura">
@@ -113,7 +119,7 @@ const [idProveedor, setIdProveedor] = useState("");
             <div className="col-md-4">
               <label className="form-label">Proveedor</label>
              <select value={idProveedor} className="form-select border" onChange={e => setIdProveedor(e.target.value)}>
-  <option value="">Seleccione un proveedor</option>
+  <option value="" disabled>Seleccione un proveedor</option>
   {proveedores.map(prov => (
     <option key={prov.idProveedor} value={prov.idProveedor}>
       {prov.nombreProveedor}
@@ -132,7 +138,7 @@ const [idProveedor, setIdProveedor] = useState("");
           Regresar
         </button>
 
-        <button className="btn btn-primary me-2">
+        <button className="btn btn-primary me-2"  onClick={() => setOpenModal(true)}>
           Agregar
         </button>
 
@@ -158,7 +164,22 @@ const [idProveedor, setIdProveedor] = useState("");
         </div>
       </div>
 
+<Modal
+  isOpen={openModal}
+  onClose={() => setOpenModal(false)}
+  title="Agregar Productos a la Compra">
+    <div className="container">
+        <div className="row">
+          <div className="col-6">
+            <label htmlFor="">Producto</label>
+            <input type="text" className="form-control" placeholder="Buscar por nombre Producto" />
+          </div>
+        </div>
+    </div>
+</Modal>
+
     </div>
   );
 }
+
 export default RegistrarCompras;
