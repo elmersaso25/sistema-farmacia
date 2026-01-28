@@ -30,6 +30,26 @@ const obtenerMedicamentosPorId = async (req, res) => {
     }
 }
 
+//Funcion buscar medicamento
+const buscarMedicamentos = async (req, res) => {
+    const { q } = req.query;
+
+    if (!q) {
+        return res.status(400).json({ mensaje: "Debe enviar un término de búsqueda" });
+    }
+
+    try {
+        const [rows] = await pool.query("SELECT codigoMedicamento, CONCAT(nombreMedicamento, ' ', descripcion) AS medicamento,precio,stock FROM medicamentos WHERE nombreMedicamento LIKE ? OR codigoMedicamento LIKE ?  LIMIT 10",
+            [`${q}%`, `${q}%`]
+        );
+
+        return res.status(200).json(rows);
+    } catch (error) {
+        console.error("Error al buscar medicamento", error);
+        return res.status(500).json({ mensaje: "Error al buscar medicamento" });
+    }
+}
+
 //Funcion registrar medicamentos
 const registrarMedicamentos = async (req, res) => {
     let { nombreMedicamento, descripcion, precio, categoria } = req.body
@@ -187,18 +207,18 @@ const cambiarEstado = async (req, res) => {
     }
 }
 
-const obtenerTotalMedicamentos = async (req,res) => {
-    try{
+const obtenerTotalMedicamentos = async (req, res) => {
+    try {
         const [rows] = await pool.query("SELECT COUNT(*) AS totalMedicamentos FROM medicamentos;");
         res.json({
             totalMedicamentos: rows[0].totalMedicamentos
         });
-    }catch(error){
-            res.status(500).json({ error: "Error al obtener el total de medicamentos" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener el total de medicamentos" });
     }
 }
 
 
 
 
-module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos };
+module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos };

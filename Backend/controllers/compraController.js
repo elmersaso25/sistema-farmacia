@@ -184,8 +184,6 @@ const obtenerDatosIniciales = async (req, res) => {
 };
 
 
-
-
 //Funcion mostrar total de compras
 const obtenerTotalCompras = async (req,res) => {
      try {
