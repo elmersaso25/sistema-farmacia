@@ -39,7 +39,7 @@ const buscarMedicamentos = async (req, res) => {
     }
 
     try {
-        const [rows] = await pool.query("SELECT codigoMedicamento, CONCAT(nombreMedicamento, ' ', descripcion) AS medicamento,precio,stock FROM medicamentos WHERE nombreMedicamento LIKE ? OR codigoMedicamento LIKE ?  LIMIT 10",
+        const [rows] = await pool.query("SELECT idMedicamento, codigoMedicamento, CONCAT(nombreMedicamento, ' ', descripcion) AS medicamento,precio,stock FROM medicamentos WHERE nombreMedicamento LIKE ? OR codigoMedicamento LIKE ?  LIMIT 10",
             [`${q}%`, `${q}%`]
         );
 
