@@ -320,7 +320,7 @@ useEffect(() => {
   <input
     type="number"
     className="form-control mb-2"
-    placeholder="Precio"
+    placeholder="Precio Unitario"
     value={precio}
     onChange={(e) => setPrecio(e.target.value)}
   />
