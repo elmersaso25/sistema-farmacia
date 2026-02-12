@@ -31,6 +31,7 @@ function App() {
       {/* Rutas */}
       <Routes>
         <Route path="/" element={<Login />} />
+        
         <Route path="/panelPrincipal"
           element={
             <ProtectedRoute>

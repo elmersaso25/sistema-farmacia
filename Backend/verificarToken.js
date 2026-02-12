@@ -11,11 +11,14 @@ const verificarToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, SECRET_KEY);
-        // Asignamos solo lo que necesitamos
         req.usuario = { idUsuario: decoded.idUsuario };
         next();
+        
     } catch (error) {
-        return res.status(401).json({ mensaje: 'Token inválido o expirado' });
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ mensaje: 'Sesión expirada, inicia sesión de nuevo' });
+        }
+        return res.status(401).json({ mensaje: 'Token inválido' });
     }
 };
 
