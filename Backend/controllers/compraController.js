@@ -37,31 +37,55 @@ const registrarCompras = async (req, res) => {
         }
 
         let totalCompra = 0;
+        let errores = {};
 
-        // Validar detalles y calcular total
-        for (const item of detalles) {
-            const { idMedicamento, lote, fechaVencimiento, cantidad, precio } = item;
+         // ✅ Validar detalles
+        for (let i = 0; i < detalles.length; i++) {
+            const { idMedicamento, lote, fechaVencimiento, cantidad, precio } = detalles[i];
 
             // Validar medicamento
             const [medicamento] = await connection.query(
                 "SELECT idMedicamento FROM medicamentos WHERE idMedicamento = ?",
                 [idMedicamento]
             );
-            if (medicamento.length === 0) throw new Error('Uno de los medicamentos no existe');
 
-            if (!lote || lote.trim() === '') throw new Error('El lote no puede estar vacío');
+            if (medicamento.length === 0) {
+                errores[`detalles.${i}.idMedicamento`] = "El medicamento no existe";
+            }
+
+            if (!lote || lote.trim() === "") {
+                errores[`detalles.${i}.lote`] = "El lote no puede estar vacío";
+            }
 
             const fechaVence = new Date(fechaVencimiento);
             const hoy = new Date();
-            if (isNaN(fechaVence.getTime())) throw new Error('Fecha de vencimiento inválida');
-            if (fechaVence <= hoy) throw new Error('La fecha de vencimiento debe ser futura');
 
-            if (!Number.isInteger(cantidad) || cantidad <= 0)
-                throw new Error('La cantidad debe ser un número entero mayor a 0');
+            if (isNaN(fechaVence.getTime())) {
+                errores[`detalles.${i}.fechaVencimiento`] = "Fecha inválida";
+            } else if (fechaVence <= hoy) {
+                errores[`detalles.${i}.fechaVencimiento`] = "Debe ser una fecha futura";
+            }
 
-            if (isNaN(precio) || precio <= 0) throw new Error('El precio debe ser mayor a 0');
+            if (!Number.isInteger(cantidad) || cantidad <= 0) {
+                errores[`detalles.${i}.cantidad`] = "La cantidad debe ser mayor a 0";
+            }
 
-            totalCompra += cantidad * precio;
+            if (isNaN(precio) || precio <= 0) {
+                errores[`detalles.${i}.precio`] = "El precio debe ser mayor a 0";
+            }
+
+            // Solo sumar si ese item no tiene error en cantidad/precio
+            if (
+                !errores[`detalles.${i}.cantidad`] &&
+                !errores[`detalles.${i}.precio`]
+            ) {
+                totalCompra += cantidad * precio;
+            }
+        }
+
+        if (Object.keys(errores).length > 0) {
+            await connection.rollback();
+            return res.status(400).json({ errores });
         }
 
         // ===== Generar número de factura seguro usando correlativosFactura =====
@@ -91,7 +115,6 @@ const registrarCompras = async (req, res) => {
                 [serie, añoActual, nuevoNumero]
             );
         }
-
         // ===== Insertar compra con fechaCompra automática =====
         const [compraResult] = await connection.query(
             "INSERT INTO compras (idProveedor, totalCompra, observaciones, usuarioRegistro, noFactura, fechaCompra) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
@@ -135,7 +158,7 @@ const registrarCompras = async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        res.status(500).json({
+        res.status(400).json({
             mensaje: 'Error al registrar la compra',
             error: error.message
         });

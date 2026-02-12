@@ -15,22 +15,24 @@ function RegistrarCompras() {
   const [fechaCompra, setFechaCompra] = useState("");
 
   const [detalles, setDetalles] = useState([]);
-const [proveedores, setProveedores] = useState([]);
-const [idProveedor, setIdProveedor] = useState("");
+  const [proveedores, setProveedores] = useState([]);
+  const [idProveedor, setIdProveedor] = useState("");
+  const [observaciones, setObservaciones] = useState("");
 
-const [openModal, setOpenModal] = useState(false);
-const [busqueda, setBusqueda] = useState("");
-const [productos, setProductos] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [productos, setProductos] = useState([]);
 
 
-const [openMiniModal, setOpenMiniModal] = useState(false);
-const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [openMiniModal, setOpenMiniModal] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
 
-const [cantidad, setCantidad] = useState("");
-const [precio, setPrecio] = useState("");
-const [lote, setLote] = useState("");
-const [fechaVencimiento, setFechaVencimiento] = useState("");
+  const [cantidad, setCantidad] = useState("");
+  const [precio, setPrecio] = useState("");
+  const [lote, setLote] = useState("");
+  const [fechaVencimiento, setFechaVencimiento] = useState("");
 
+  const [erroresMini, setErroresMini] = useState({});
 
 
 
@@ -95,87 +97,175 @@ const [fechaVencimiento, setFechaVencimiento] = useState("");
   }, [])
 
   useEffect(() => {
-  if (busqueda.trim().length < 2) {
-    setProductos([]);
-    return;
-  }
-
-  const buscarProductos = async () => {
-    try {
-      const resp = await fetch(
-        `http://localhost:3000/medicamentos/buscar?q=${busqueda}`
-      );
-
-      if (!resp.ok) {
-        throw new Error("Error al buscar productos");
-      }
-
-      const data = await resp.json();
-      setProductos(data);
-    } catch (error) {
-      console.error(error);
+    if (busqueda.trim().length < 2) {
       setProductos([]);
+      return;
     }
-  };
-  buscarProductos();
-}, [busqueda]);
+
+    const buscarProductos = async () => {
+      try {
+        const resp = await fetch(
+          `http://localhost:3000/medicamentos/buscar?q=${busqueda}`
+        );
+
+        if (!resp.ok) {
+          throw new Error("Error al buscar productos");
+        }
+
+        const data = await resp.json();
+        setProductos(data);
+      } catch (error) {
+        console.error(error);
+        setProductos([]);
+      }
+    };
+    buscarProductos();
+  }, [busqueda]);
 
   const formatearFecha = (fecha) => {
+    console.log("Fecha recibida", fecha)
     if (!fecha) return "";
-    const fechaLocal = new Date(fecha);
-    return fechaLocal.toLocaleString("es-ES", {
-      timeZone: "America/Mexico_City",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      //  hour: "2-digit",
-      //  minute: "2-digit"
-    });
+
+    const [anio, mes, dia] = fecha.split("-");
+    return `${dia}/${mes}/${anio}`;
   };
+
+
 
   //Funcion para mostrar segundo modal
   const agregarDetallesProducto = (producto) => {
-  setProductoSeleccionado(producto);
-  setOpenMiniModal(true);
-};
-
-//Funcion para guardar producto en memoria
-const guardarProductoMemoria = () => {
-  if (!cantidad || !precio || !lote || !fechaVencimiento) {
-    alert("Complete todos los campos");
-    return;
-  }
-
-  const nuevoDetalle = {
-    idMedicamento: productoSeleccionado.idMedicamento,
-    medicamento: productoSeleccionado.medicamento,
-    cantidad: Number(cantidad),
-    precio: Number(precio),
-    lote,
-    fechaVencimiento,
-    subtotal: Number(cantidad) * Number(precio)
+    setProductoSeleccionado(producto);
+    setOpenMiniModal(true);
   };
 
-  setDetalles(prev => [...prev, nuevoDetalle]);
+  // Funcion para guardar producto en memoria
+  const guardarProductoMemoria = () => {
 
-  // limpiar estados
-  setCantidad("");
-  setPrecio("");
-  setLote("");
-  setFechaVencimiento("");
-  setProductoSeleccionado(null);
+    let nuevosErrores = {};
 
-  setOpenMiniModal(false);
-  setOpenModal(false);
-};
+    if (!cantidad || Number(cantidad) <= 0) {
+      nuevosErrores.cantidad = "La cantidad debe ser mayor a 0";
+    }
 
-useEffect(() => {
-  console.log("DETALLES EN MEMORIA:", detalles);
-}, [detalles]);
+    if (!precio || Number(precio) <= 0) {
+      nuevosErrores.precio = "El precio debe ser mayor a 0";
+    }
+
+    if (!lote || lote.trim() === "") {
+      nuevosErrores.lote = "El lote es obligatorio";
+    }
+
+    if (!fechaVencimiento) {
+      nuevosErrores.fechaVencimiento = "La fecha es obligatoria";
+    } else {
+      const fecha = new Date(fechaVencimiento);
+      const hoy = new Date();
+
+      if (fecha <= hoy) {
+        nuevosErrores.fechaVencimiento = "Debe ser una fecha futura";
+      }
+    }
+
+    // Guardar errores en estado
+    setErroresMini(nuevosErrores);
+
+    // Si hay errores, no continuar
+    if (Object.keys(nuevosErrores).length > 0) return;
+
+    const nuevoDetalle = {
+      idMedicamento: productoSeleccionado.idMedicamento,
+      medicamento: productoSeleccionado.medicamento,
+      cantidad: Number(cantidad),
+      precio: Number(precio),
+      lote,
+      fechaVencimiento,
+      subtotal: Number(cantidad) * Number(precio)
+    };
+
+    setDetalles(prev => [...prev, nuevoDetalle]);
+
+    // Limpiar campos
+    setCantidad("");
+    setPrecio("");
+    setLote("");
+    setFechaVencimiento("");
+    setProductoSeleccionado(null);
+    setErroresMini({});
+
+    setOpenMiniModal(false);
+    setOpenModal(false);
+  };
+
+
+  useEffect(() => {
+    console.log("DETALLES EN MEMORIA:", detalles);
+  }, [detalles]);
 
 
 
- 
+  //Enviar compra al backend
+  const realizarCompra = async () => {
+
+    const token = localStorage.getItem("token");
+
+
+    if (!idProveedor) {
+      Swal.fire("Error", "Seleccione un proveedor", "error");
+      console.log("Falta Proveedor");
+      return;
+    }
+
+    if (detalles.length === 0) {
+      Swal.fire("Error", "Debe agregar al menos un producto", "error");
+      console.log("Falta detalles de compra");
+      return;
+    }
+
+    const compra = {
+      noCompra,
+      noFactura,
+      fechaCompra,
+      idProveedor,
+      observaciones,
+      total,
+      detalles
+    };
+
+    try {
+      const resp = await fetch("http://localhost:3000/compras/registrar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // <- aquí
+        },
+        body: JSON.stringify(compra)
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+
+        Swal.fire({
+          icon: "success",
+          title: "Compra registrada correctamente",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+
+        navigate("/compras");
+
+      } else {
+        Swal.fire("Error", data.message || "Error al guardar", "error");
+      }
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "No se pudo conectar al servidor", "error");
+    }
+  };
+
+
+
 
   return (
     <div className="container-custom">
@@ -189,7 +279,7 @@ useEffect(() => {
             </div>
 
             <div className="col-md-3">
-              <label className="form-label">No. Factura</label>
+              <label className="form-label">No. Comprobante</label>
               <input type="text" className="form-control border" value={noFactura} readOnly />
             </div>
 
@@ -200,14 +290,14 @@ useEffect(() => {
 
             <div className="col-md-4">
               <label className="form-label">Proveedor</label>
-             <select value={idProveedor} className="form-select border" onChange={e => setIdProveedor(e.target.value)}>
-  <option value="" disabled>Seleccione un proveedor</option>
-  {proveedores.map(prov => (
-    <option key={prov.idProveedor} value={prov.idProveedor}>
-      {prov.nombreProveedor}
-    </option>
-  ))}
-</select>
+              <select value={idProveedor} className="form-select border" onChange={e => setIdProveedor(e.target.value)}>
+                <option value="" disabled>Seleccione un proveedor</option>
+                {proveedores.map(prov => (
+                  <option key={prov.idProveedor} value={prov.idProveedor}>
+                    {prov.nombreProveedor}
+                  </option>
+                ))}
+              </select>
 
             </div>
           </div>
@@ -215,19 +305,42 @@ useEffect(() => {
       </div>
 
       {/* TUS BOTONES */}
-      <div className="p-4">
-        <button className="btn btn-danger me-2" onClick={() => navigate("/compras")}>
+      <div className="p-4 d-flex align-items-end">
+
+        <button
+          className="btn btn-danger me-2"
+          onClick={() => navigate("/compras")}
+        >
           Regresar
         </button>
 
-        <button className="btn btn-primary me-2"  onClick={() => setOpenModal(true)}>
+        <button
+          className="btn btn-primary me-2"
+          onClick={() => setOpenModal(true)}
+        >
           Agregar
         </button>
 
-        <button className="btn btn-success">
+        <button
+          className="btn btn-success me-3"
+          onClick={realizarCompra}
+        >
           Realizar Compra
         </button>
+
+        {/* Observaciones */}
+        <div style={{ width: "450px" }}>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Observaciones de compra (opcional)"
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+          />
+        </div>
+
       </div>
+
 
       {/* TU TABLA, PERO YA PARA DETALLES */}
       <div className="border rounded p-5 bg-light">
@@ -246,113 +359,133 @@ useEffect(() => {
         </div>
       </div>
 
-<Modal
-  isOpen={openModal}
-  onClose={() => setOpenModal(false)}
-  title="Agregar Productos a la Compra"
-    size ="md"
-    titleSize="22px">
-    <div className="container">
-        <div className="row">
-          <div className="col-12">
-            <label htmlFor="">Producto</label>
-            <input type="text" className="form-control" placeholder="Buscar por código o nombre Producto" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+      <Modal
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+        title="Agregar Productos a la Compra"
+        size="md"
+        titleSize="22px">
+        <div className="container">
+          <div className="row">
+            <div className="col-12">
+              <label htmlFor="">Producto</label>
+              <input type="text" className="form-control" placeholder="Buscar por código o nombre Producto" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+            </div>
+          </div>
+          {/* TABLA DE RESULTADOS */}
+          <div className="row">
+            <div className="col-12">
+              <table className="table table-sm table-hover">
+                <thead className="table-light">
+                  <tr>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productos.map((p) => (
+                    <tr key={p.codigoMedicamento}>
+                      <td>{p.codigoMedicamento}</td>
+                      <td>{p.medicamento}</td>
+
+                      <td>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => agregarDetallesProducto(p)}
+                        >
+                          Agregar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {productos.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-center text-muted">
+                        No hay resultados
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-        {/* TABLA DE RESULTADOS */}
-    <div className="row">
-      <div className="col-12">
-        <table className="table table-sm table-hover">
-          <thead className="table-light">
-            <tr>
-              <th>Código</th>
-              <th>Producto</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p) => (
-              <tr key={p.codigoMedicamento}>
-                <td>{p.codigoMedicamento}</td>
-                <td>{p.medicamento}</td>
+      </Modal>
 
-                <td>
-                  <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => agregarDetallesProducto(p)}
-                  >
-                    Agregar
-                  </button>
-                </td>
-              </tr>
-            ))}
+      <Modal
+        isOpen={openMiniModal}
+        onClose={() => setOpenMiniModal(false)}
+        title="Detalles del producto"
+        size="sm"
+        titleSize="20px"
+      >
+        {/* Cantidad */}
+        <input
+          type="number"
+          className={`form-control mb-1 ${erroresMini.cantidad ? "is-invalid" : ""}`}
+          placeholder="Cantidad"
+          value={cantidad}
+          onChange={(e) => {
+            setCantidad(e.target.value);
+            setErroresMini(prev => ({ ...prev, cantidad: undefined }));
+          }}
+        />
+        {erroresMini.cantidad && <div className="text-danger small">{erroresMini.cantidad}</div>}
 
-            {productos.length === 0 && (
-              <tr>
-                <td colSpan="5" className="text-center text-muted">
-                  No hay resultados
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    </div>
-</Modal>
+        {/* Precio */}
+        <input
+          type="number"
+          className={`form-control mb-1 ${erroresMini.precio ? "is-invalid" : ""}`}
+          placeholder="Precio Unitario"
+          value={precio}
+          onChange={(e) => {
+            setPrecio(e.target.value);
+            setErroresMini(prev => ({ ...prev, precio: undefined }));
+          }}
+        />
+        {erroresMini.precio && <div className="text-danger small">{erroresMini.precio}</div>}
 
+        {/* Lote */}
+        <input
+          type="text"
+          className={`form-control mb-1 ${erroresMini.lote ? "is-invalid" : ""}`}
+          placeholder="Lote"
+          value={lote}
+          onChange={(e) => {
+            setLote(e.target.value);
+            setErroresMini(prev => ({ ...prev, lote: undefined }));
+          }}
+        />
+        {erroresMini.lote && <div className="text-danger small">{erroresMini.lote}</div>}
 
-<Modal
-  isOpen={openMiniModal}
-  onClose={() => setOpenMiniModal(false)}
-  title="Detalles del producto"
-  size="sm"
-  titleSize="20px"
->
-  <input
-    type="number"
-    className="form-control mb-2"
-    placeholder="Cantidad"
-    value={cantidad}
-    onChange={(e) => setCantidad(e.target.value)}
-  />
+        {/* Fecha de vencimiento */}
+        <label>Fecha vencimiento</label>
+        <input
+          type="date"
+          className={`form-control mb-2 ${erroresMini.fechaVencimiento ? "is-invalid" : ""}`}
+          value={fechaVencimiento}
+          onChange={(e) => {
+            setFechaVencimiento(e.target.value);
+            setErroresMini(prev => ({ ...prev, fechaVencimiento: undefined }));
+          }}
+        />
+        {erroresMini.fechaVencimiento && (
+          <div className="text-danger small">{erroresMini.fechaVencimiento}</div>
+        )}
 
-  <input
-    type="number"
-    className="form-control mb-2"
-    placeholder="Precio Unitario"
-    value={precio}
-    onChange={(e) => setPrecio(e.target.value)}
-  />
-
-  <input
-    type="text"
-    className="form-control mb-2"
-    placeholder="Lote"
-    value={lote}
-    onChange={(e) => setLote(e.target.value)}
-  />
-
-  <label>Fecha vencimiento</label>
-  <input
-    type="date"
-    className="form-control mb-3"
-    value={fechaVencimiento}
-    onChange={(e) => setFechaVencimiento(e.target.value)}
-  />
-
-  <div className="text-end">
-    <button
-      type="button"
-      className="btn btn-success btn-sm"
-      onClick={guardarProductoMemoria}
-    >
-      Guardar
-    </button>
-  </div>
-</Modal>
-
-
+        {/* Botón Guardar */}
+        <div className="text-end mt-2">
+          <button
+            type="button"
+            className="btn btn-success btn-sm"
+            onClick={guardarProductoMemoria}
+          >
+            Guardar
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
