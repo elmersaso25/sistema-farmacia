@@ -31,7 +31,7 @@ function Compras() {
     const columns = [
         { name: "No.", selector: (row) => row.noCompra, sortable: true, width: "80px", wrap: false },
 
-        { name: "No Factura", selector: (row) => row.noFactura, sortable: true, width: "150px", wrap: false },
+        { name: "Comprobante", selector: (row) => row.noFactura, sortable: true, width: "150px", wrap: false },
 
         { name: "Fecha", selector: (row) => formatearFecha(row.fechaCompra), sortable: true, width: "120px", wrap: false },
 
@@ -92,15 +92,31 @@ function Compras() {
         fetchCompras();
     }, []);
 
+
     //Filtrado por búsqueda
-    const filteredItems = compras.filter((item) => {
-        const text = filterText.toLowerCase();
+  const text = filterText.trim();
 
-        const noCompra = item.noCompra?.toString().toLowerCase() || "";
-        const noFactura = item.noFactura?.toLowerCase() || "";
+let filteredItems = compras;
 
-        return noCompra.includes(text) || noFactura.includes(text);
-    });
+if (text) {
+  // 1️⃣ Buscar coincidencia exacta en número de compra
+  const porNumero = compras.filter(
+    (item) => String(item.noCompra) === text
+  );
+
+  if (porNumero.length > 0) {
+    filteredItems = porNumero;
+  } else {
+    // 2️⃣ Si no encontró número exacto, buscar en factura
+    filteredItems = compras.filter((item) =>
+      String(item.noFactura ?? "")
+        .toLowerCase()
+        .includes(text.toLowerCase())
+    );
+  }
+}
+
+
 
 
     // Estilos personalizados
@@ -128,7 +144,7 @@ function Compras() {
             {/* Buscador */}
             <input
                 type="text"
-                placeholder="Buscar por número de compra o factura"
+                placeholder="Buscar por número de compra o comprobante"
                 className="form-control mb-3"
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
