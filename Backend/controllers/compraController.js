@@ -12,6 +12,37 @@ const obtenerCompras = async (req, res) => {
     }
 }
 
+//Funcion obtener compras por noCompra
+const obtenerDetallesCompra = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [rows] = await pool.query(
+            `SELECT d.idDetalle,
+                    CONCAT(p.nombreMedicamento,' ',p.descripcion) AS nombreProducto,
+                    d.cantidad,
+                    d.precio,
+                    d.subtotal
+             FROM detalleCompras d
+             INNER JOIN medicamentos p 
+                ON d.idMedicamento = p.idMedicamento
+             WHERE d.noCompra = ?`,
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ mensaje: "No hay detalles para esta compra" });
+        }
+
+        res.json(rows); // ✅ ESTO FALTABA
+
+    } catch (error) {
+        console.error("Error al obtener detalles de compra", error);
+        res.status(500).json({ mensaje: "Error al obtener detalles de compra" });
+    }
+};
+
+
 
 //Funcion registrar compras
 const registrarCompras = async (req, res) => {
@@ -220,4 +251,4 @@ const obtenerTotalCompras = async (req,res) => {
     }
 }
 
-module.exports = { obtenerCompras, registrarCompras, obtenerDatosIniciales, obtenerTotalCompras };
+module.exports = { obtenerCompras, obtenerDetallesCompra, registrarCompras, obtenerDatosIniciales, obtenerTotalCompras };
