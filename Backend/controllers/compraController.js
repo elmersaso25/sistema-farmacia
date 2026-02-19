@@ -70,7 +70,7 @@ const registrarCompras = async (req, res) => {
         let totalCompra = 0;
         let errores = {};
 
-         // ✅ Validar detalles
+        // ✅ Validar detalles
         for (let i = 0; i < detalles.length; i++) {
             const { idMedicamento, lote, fechaVencimiento, cantidad, precio } = detalles[i];
 
@@ -201,46 +201,104 @@ const registrarCompras = async (req, res) => {
 
 // Funcion obtener datos iniciales
 const obtenerDatosIniciales = async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
+    try {
+        const [rows] = await pool.query(`
       SELECT 
         MAX(noCompra) AS ultimaCompra,
         MAX(noFactura) AS ultimaFactura
       FROM compras
     `);
 
-    const ultimaCompra = rows[0].ultimaCompra || 0;
-    const ultimaFactura = rows[0].ultimaFactura; // puede ser NULL
+        const ultimaCompra = rows[0].ultimaCompra || 0;
+        const ultimaFactura = rows[0].ultimaFactura; // puede ser NULL
 
-    let siguienteNumeroFactura = 1;
+        let siguienteNumeroFactura = 1;
 
-    if (ultimaFactura) {
-      // Formato esperado: A-2026-00001
-      const partes = ultimaFactura.split("-");
-      const numero = parseInt(partes[2], 10);
-      siguienteNumeroFactura = numero + 1;
+        if (ultimaFactura) {
+            // Formato esperado: A-2026-00001
+            const partes = ultimaFactura.split("-");
+            const numero = parseInt(partes[2], 10);
+            siguienteNumeroFactura = numero + 1;
+        }
+
+        const anioActual = new Date().getFullYear();
+        const noFacturaFormateada = `A-${anioActual}-${String(siguienteNumeroFactura).padStart(5, "0")}`;
+
+        res.json({
+            siguienteCompra: ultimaCompra + 1,
+            siguienteFactura: noFacturaFormateada,
+            fechaCompra: new Date().toISOString().split("T")[0]
+        });
+    } catch (error) {
+        console.error("Error en obtenerDatosIniciales:", error);
+        res.status(500).json({
+            mensaje: "Error al obtener datos iniciales de compra"
+        });
     }
-
-    const anioActual = new Date().getFullYear();
-    const noFacturaFormateada = `A-${anioActual}-${String(siguienteNumeroFactura).padStart(5, "0")}`;
-
-    res.json({
-      siguienteCompra: ultimaCompra + 1,
-      siguienteFactura: noFacturaFormateada,
-      fechaCompra: new Date().toISOString().split("T")[0]
-    });
-  } catch (error) {
-    console.error("Error en obtenerDatosIniciales:", error);
-    res.status(500).json({
-      mensaje: "Error al obtener datos iniciales de compra"
-    });
-  }
 };
+
+//Funcion anular compra
+const anularCompra = async (req, res) => {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [compra] = await connection.query("SELECT estadoCompra FROM compras WHERE noCompra = ?",
+            [id]);
+
+        if (compra.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({
+                message: "La compra no existe",
+            });
+        }
+
+        if (compra[0].estado === "Anulada") {
+            await connection.rollback();
+            return res.status(404).json({
+                message: "La compra ya esta anulada",
+            });
+        }
+
+        const [detalles] = await connection.query("SELECT idMedicamento, cantidad FROM detalleCompras WHERE noCompra = ?",
+            [id]);
+
+        for (const detalle of detalles) {
+            await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
+                [detalle.cantidad, detalle.idMedicamento]);
+        }
+
+        await connection.query("UPDATE compras SET estadoCompra = 'Anulada' WHERE noCompra = ?",
+            [id]);
+
+        await connection.commit();
+
+        res.json({
+            message: "Compra anulada correctamente",
+        });
+
+
+
+
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json({
+            message: "Error al anular la compra",
+            error: error.message,
+        });
+    }
+    finally {
+        connection.release();
+    }
+}
 
 
 //Funcion mostrar total de compras
-const obtenerTotalCompras = async (req,res) => {
-     try {
+const obtenerTotalCompras = async (req, res) => {
+    try {
         const [rows] = await pool.query("SELECT COUNT(*) AS totalCompras FROM compras;");
         res.json({
             totalCompras: rows[0].totalCompras
@@ -251,4 +309,4 @@ const obtenerTotalCompras = async (req,res) => {
     }
 }
 
-module.exports = { obtenerCompras, obtenerDetallesCompra, registrarCompras, obtenerDatosIniciales, obtenerTotalCompras };
+module.exports = { obtenerCompras, obtenerDetallesCompra, registrarCompras, obtenerDatosIniciales, anularCompra, obtenerTotalCompras };
