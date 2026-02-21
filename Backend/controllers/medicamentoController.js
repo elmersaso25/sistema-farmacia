@@ -218,7 +218,18 @@ const obtenerTotalMedicamentos = async (req, res) => {
     }
 }
 
+const obtenerTotalStockMedicamentos = async (req,res) => {
+    try {
+        const [rows] = await pool.query("SELECT SUM(stock) AS stockTotal FROM medicamentos;");
+        res.json({
+            stockTotal: rows[0].stockTotal
+        });
+    } catch(error){
+        res.status(500).json({ error: "Error al obtener total stock medicamentos"});
+    }
+}
 
 
 
-module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos };
+
+module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos, obtenerTotalStockMedicamentos};
