@@ -10,6 +10,7 @@ function PanelPrincipal() {
   const [totalClientes, setTotalClientes] = useState(0);
   const [totalProveedores, setTotalProveedores] = useState(0);
   const [totalCompras, setTotalCompras] = useState(0);
+  const [totalStockMedicamentos, setTotalStockMedicamentos] = useState(0);
 
 
 
@@ -76,10 +77,10 @@ function PanelPrincipal() {
 
   //Fetch para obtener total compras
   useEffect(() => {
-    const obtenerTotalCompras = async (req, res) => {
+    const obtenerTotalCompras = async () => {
       try {
-        const res = await fetch("http://localhost:3000/compras/totalCompras");
-        const data = await res.json();
+        const response = await fetch("http://localhost:3000/compras/totalCompras");
+        const data = await response.json();
         setTotalCompras(data.totalCompras);
       }
       catch (error) {
@@ -88,6 +89,21 @@ function PanelPrincipal() {
     }
     obtenerTotalCompras();
   }, [])
+
+  //Fetch para obtener total medicamentos en stock
+  useEffect(() => {
+    const obtenerTotalStockMedicamentos = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/medicamentos/totalStock");
+        const data = await response.json();
+        setTotalStockMedicamentos(data.stockTotal);
+
+      } catch (error) {
+        console.error("Error al obtener total stock medicamentos:", error);
+      }
+    }
+    obtenerTotalStockMedicamentos();
+  },[])
 
 
   return (
@@ -144,6 +160,14 @@ function PanelPrincipal() {
             </div>
           </div>
           <div className="col-md-3 mb-3">
+            <div className="card dashboard-card text-white shadow-sm" style={{ backgroundColor: 'rgb(111,66,193)' }}>
+              <div className="card-body">
+                <h5><i className="fa-solid fa-boxes-stacked me-2"></i>Inventario</h5>
+                <h2>{totalStockMedicamentos}</h2>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3 mb-3">
             <div className="card dashboard-card bg-success text-white shadow-sm">
               <div className="card-body">
                 <h5><i className="fa-solid fa-dollar-sign me-2"></i>Ventas Hoy</h5>
@@ -160,16 +184,6 @@ function PanelPrincipal() {
               </div>
             </div>
           </div>
-
-          <div className="col-md-3 mb-3">
-            <div className="card dashboard-card text-white shadow-sm" style={{ backgroundColor: 'rgb(111,66,193)' }}>
-              <div className="card-body">
-                <h5><i className="fa-solid fa-boxes-stacked me-2"></i>Inventario</h5>
-                <h2>980</h2>
-              </div>
-            </div>
-          </div>
-
 
         </div>
       </div>
