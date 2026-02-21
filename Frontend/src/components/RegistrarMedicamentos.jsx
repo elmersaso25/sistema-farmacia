@@ -42,7 +42,11 @@ function RegistrarMedicamentos() {
                     text: "El medicamento fue registrado correctamente.",
                     showConfirmButton: false,
                     timer: 2000,
+
+                  }).then(() =>{
+                    navigate("/medicamentos");
                   });
+
                   setFormData({
                     nombreMedicamento: "",
                     descripcion: "",

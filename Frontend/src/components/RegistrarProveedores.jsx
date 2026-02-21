@@ -41,6 +41,9 @@ function RegistrarProveedores() {
                     text: "El proveedor fue registrado correctamente.",
                     showConfirmButton: false,
                     timer: 2000,
+                    
+                }).then(() => {
+                    navigate("/proveedores");
                 });
                 setFormData({
                     nombreProveedor: "",
