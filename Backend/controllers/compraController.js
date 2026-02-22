@@ -1,3 +1,4 @@
+const PDFDocument = require("pdfkit");
 const pool = require("../db");
 
 
@@ -309,4 +310,107 @@ const obtenerTotalCompras = async (req, res) => {
     }
 }
 
-module.exports = { obtenerCompras, obtenerDetallesCompra, registrarCompras, obtenerDatosIniciales, anularCompra, obtenerTotalCompras };
+const generarPDFCompra = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [compra] = await pool.query("SELECT c.noCompra, c.noFactura, c.fechaCompra, p.nombreProveedor, c.totalCompra, c.estadoCompra, c.observaciones FROM compras c INNER JOIN proveedores p ON c.idProveedor = p.idProveedor WHERE c.noCompra = ?", [id]);
+
+        if (compra.length === 0) {
+            return res.status(404).json({ message: "Compra no encontrada" });
+        }
+
+        const fecha = new Date(compra[0].fechaCompra);
+        const fechaFormateada = fecha.toLocaleDateString("es-GT");
+
+        const [detalle] = await pool.query(
+            "SELECT CONCAT(m.nombreMedicamento,'',m.descripcion) AS medicamento, d.cantidad, d.precio, d.subtotal FROM detalleCompras d INNER JOIN medicamentos m ON d.idMedicamento = m.idMedicamento WHERE noCompra = ?;", [id]);
+
+        const doc = new PDFDocument({ margin: 50 });
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=comprobante_${id}.pdf`
+        );
+
+        doc.pipe(res);
+
+        // 🔹 TÍTULO
+        doc
+            .fontSize(20)
+            .text("FARMACIA EL AHORRO", { align: "center" });
+
+        doc
+            .fontSize(16)
+            .text("COMPROBANTE DE COMPRA", { align: "center" });
+
+        doc.moveDown(2);
+
+        // 🔹 DATOS GENERALES
+        doc.fontSize(12);
+        doc.text(`No. Compra: ${compra[0].noCompra}`);
+        doc.text(`No. Comprobante: ${compra[0].noFactura}`);
+        doc.text(`Proveedor: ${compra[0].nombreProveedor}`);
+        doc.text(`Fecha: ${fechaFormateada}`);
+
+        doc.moveDown();
+
+        // 🔹 Línea separadora
+        doc.moveTo(50, doc.y)
+            .lineTo(550, doc.y)
+            .stroke();
+
+        doc.moveDown();
+
+        // 🔹 Encabezado tabla
+        doc.fontSize(13).text("DETALLE DE PRODUCTOS");
+        doc.moveDown();
+
+        const tableTop = doc.y;
+
+        doc.fontSize(11);
+        doc.text("Medicamento", 50, tableTop);
+        doc.text("Cantidad", 300, tableTop);
+        doc.text("Precio", 380, tableTop);
+        doc.text("Subtotal", 450, tableTop);
+
+        doc.moveDown();
+
+        let y = doc.y;
+
+        // 🔹 Filas
+        detalle.forEach((item) => {
+            const subtotal = item.cantidad * item.precio;
+
+            doc.text(item.medicamento, 50, y);
+            doc.text(item.cantidad.toString(), 300, y);
+            doc.text(`Q${item.precio}`, 380, y);
+            doc.text(`Q${subtotal}`, 450, y);
+
+            y += 20;
+        });
+
+        doc.moveDown(2);
+
+        // 🔹 Línea antes del total
+        doc.moveTo(50, y)
+            .lineTo(550, y)
+            .stroke();
+
+        doc.moveDown();
+
+        // 🔹 TOTAL
+        doc
+            .fontSize(14)
+            .text(`TOTAL: Q${compra[0].totalCompra}`, 400, y + 20, { align: "right" });
+
+        doc.end();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error generando PDF" });
+
+    }
+}
+
+module.exports = { obtenerCompras, obtenerDetallesCompra, registrarCompras, obtenerDatosIniciales, anularCompra, obtenerTotalCompras, generarPDFCompra };
