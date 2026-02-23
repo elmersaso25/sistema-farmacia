@@ -62,7 +62,7 @@ function Clientes() {
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const response = await fetch("http://localhost:3000/clientes");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/clientes`);
         if (!response.ok) throw new Error("Error al obtener clientes");
 
         const data = await response.json();
