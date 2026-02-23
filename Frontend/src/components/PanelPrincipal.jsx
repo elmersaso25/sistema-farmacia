@@ -18,7 +18,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalUsuarios = async () => {
       try {
-        const res = await fetch("http://localhost:3000/usuarios/totalUsuarios");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/totalUsuarios`);
         const data = await res.json();
         setTotalUsuarios(data.totalUsuarios);
       } catch (error) {
@@ -32,7 +32,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalMedicamentos = async (req, res) => {
       try {
-        const res = await fetch("http://localhost:3000/medicamentos/totalMedicamentos");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/totalMedicamentos`);
         const data = await res.json();
         setTotalMedicamentos(data.totalMedicamentos);
 
@@ -48,7 +48,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalClientes = async (req, res) => {
       try {
-        const res = await fetch("http://localhost:3000/clientes/totalClientes");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes/totalClientes`);
         const data = await res.json();
         setTotalClientes(data.totalClientes);
       }
@@ -63,7 +63,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalProveedores = async (req, res) => {
       try {
-        const res = await fetch("http://localhost:3000/proveedores/totalProveedores");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/proveedores/totalProveedores`);
         const data = await res.json();
         setTotalProveedores(data.totalProveedores);
       } catch (error) {
@@ -79,7 +79,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalCompras = async () => {
       try {
-        const response = await fetch("http://localhost:3000/compras/totalCompras");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/compras/totalCompras`);
         const data = await response.json();
         setTotalCompras(data.totalCompras);
       }
@@ -94,7 +94,7 @@ function PanelPrincipal() {
   useEffect(() => {
     const obtenerTotalStockMedicamentos = async () => {
       try {
-        const response = await fetch("http://localhost:3000/medicamentos/totalStock");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/totalStock`);
         const data = await response.json();
         setTotalStockMedicamentos(data.stockTotal);
 
