@@ -110,7 +110,7 @@ function Medicamentos() {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/medicamentos/${idMedicamento}/estado`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/${idMedicamento}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: nuevoEstado })

@@ -27,7 +27,7 @@ function RegistrarMedicamentos() {
         setErrores({});
 
         try{
-            const res = await fetch("http://localhost:3000/medicamentos/registrar", {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/registrar`, {
                 method: "POST",
                 headers: {"Content-Type": "Application/json"},
                 body: JSON.stringify(formData),

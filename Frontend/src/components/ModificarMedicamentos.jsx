@@ -29,7 +29,7 @@ function ModificarMedicamentos() {
     useEffect(() => {
         const obtenerMedicamento = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/medicamentos/${id}`);
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/${id}`);
                 const data = await res.json();
 
                 setFormData({
