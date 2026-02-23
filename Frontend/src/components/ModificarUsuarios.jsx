@@ -30,7 +30,7 @@ function ModificarUsuarios() {
     useEffect(() => {
         const obtenerUsuario = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/usuarios/${id}`);
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${id}`);
                 const data = await res.json();
 
                 // NO cargar la contraseña encriptada

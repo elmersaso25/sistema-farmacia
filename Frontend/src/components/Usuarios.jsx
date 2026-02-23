@@ -60,7 +60,7 @@ function Usuarios() {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await fetch("http://localhost:3000/usuarios");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios`);
         if (!response.ok) throw new Error("Error al obtener usuarios");
 
         const data = await response.json();
@@ -117,7 +117,7 @@ const cambiarEstado = async (idUsuario) => {
   if (!result.isConfirmed) return;
 
   try {
-    const response = await fetch(`http://localhost:3000/usuarios/${idUsuario}/estado`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/estado`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: nuevoEstado })
