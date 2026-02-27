@@ -15,10 +15,16 @@ const app = express();
 
 //Middleware
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"]
+  origin: function (origin, callback) {
+    // Permitir cualquier origen (incluso otras PCs de la red)
+    callback(null, true);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], 
+  allowedHeaders: ["Content-Type", "Authorization"], 
+  credentials: true // si usas cookies o headers con credenciales
 }));
+
+// 🔹 Middleware para parsear JSON
 app.use(express.json());
 
 
