@@ -52,7 +52,7 @@ function Medicamentos() {
   useEffect(() => {
     const fetchMedicamentos = async () => {
       try {
-        const response = await fetch("http://localhost:3000/medicamentos");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos`);
         if (!response.ok) throw new Error("Error al obtener medicamentos");
 
         const data = await response.json();
