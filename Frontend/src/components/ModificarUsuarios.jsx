@@ -82,7 +82,9 @@ function ModificarUsuarios() {
                 title: "Actualización exitosa",
                 text: "El usuario fue actualizado correctamente.",
                 showConfirmButton: false,
-                timer: 2000,
+                timer: 2000
+            }).then(() =>{
+                navigate("/usuarios");
             });
             setErrores("");
 

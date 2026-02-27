@@ -73,8 +73,9 @@ function ModificarClientes() {
                 title: "Actualización exitosa",
                 text: "El cliente fue actualizado correctamente.",
                 showConfirmButton: false,
-                timer: 2000,
-            });
+                timer: 2000}).then(() =>{
+                    navigate("/clientes");
+                });
             setErrores("");
 
         } catch (error) {

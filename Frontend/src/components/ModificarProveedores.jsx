@@ -75,8 +75,9 @@ function ModificarProveedores() {
                 title: "Actualización exitosa",
                 text: "El proveedor fue actualizado correctamente.",
                 showConfirmButton: false,
-                timer: 2000,
-            });
+                timer: 2000 }).then(() =>{
+                    navigate("/proveedores");
+                });
             setErrores("");
 
         } catch (error) {

@@ -76,8 +76,9 @@ function ModificarMedicamentos() {
                 title: "Actualización exitosa",
                 text: "El medicamento fue actualizado correctamente.",
                 showConfirmButton: false,
-                timer: 2000,
-            });
+                timer: 2000}).then(() =>{
+                    navigate("/medicamentos");
+                });
             setErrores("");
 
         }
