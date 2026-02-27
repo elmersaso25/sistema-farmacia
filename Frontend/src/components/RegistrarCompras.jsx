@@ -232,7 +232,7 @@ function RegistrarCompras() {
     };
 
     try {
-      const resp = await fetch("http://localhost:3000/compras/registrar", {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL}/compras/registrar`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -256,7 +256,7 @@ function RegistrarCompras() {
 
     if (result.isConfirmed) {
       window.open(
-        `http://localhost:3000/compras/${data.noCompra}/pdf`,
+        `${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`,
         "_blank"
       );
     }

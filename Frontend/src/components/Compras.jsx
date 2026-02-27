@@ -23,7 +23,7 @@ function Compras() {
     const verDetalles = async (idCompra) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/compras/detalles/${idCompra}`,
+                `${import.meta.env.VITE_API_URL}/compras/detalles/${idCompra}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -130,7 +130,7 @@ function Compras() {
 
             console.log("4️⃣ Antes del fetch");
 
-            const response = await fetch("http://localhost:3000/compras", {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/compras`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -191,7 +191,7 @@ function Compras() {
 
         try {
             const response = await fetch(
-                `http://localhost:3000/compras/anular/${idCompra}`,
+                `${import.meta.env.VITE_API_URL}/compras/anular/${idCompra}`,
                 {
                     method: "PUT",
                     headers: {
