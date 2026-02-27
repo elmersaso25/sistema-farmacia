@@ -30,7 +30,7 @@ function ModificarProveedores() {
     useEffect(() => {
         const obtenerProveedor = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/proveedores/${id}`);
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/proveedores/${id}`);
                 const data = await res.json();
 
                 setFormData({
@@ -57,7 +57,7 @@ function ModificarProveedores() {
         const data = { ...formData };
 
         try {
-            const response = await fetch(`http://localhost:3000/proveedores/actualizar/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/proveedores/actualizar/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"

@@ -62,7 +62,7 @@ function Proveedores() {
     useEffect(() => {
         const fetchProveedores = async () => {
             try {
-                const response = await fetch("http://localhost:3000/proveedores");
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/proveedores`);
                 if (!response.ok) throw new Error("Error al obtener proveedores");
 
                 const data = await response.json();
@@ -116,7 +116,7 @@ const cambiarEstado = async (idProveedor) => {
   if (!result.isConfirmed) return;
 
   try {
-    const response = await fetch(`http://localhost:3000/proveedores/${idProveedor}/estado`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/proveedores/${idProveedor}/estado`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: nuevoEstado })
