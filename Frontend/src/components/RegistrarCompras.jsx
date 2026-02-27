@@ -204,88 +204,106 @@ function RegistrarCompras() {
 
 
   //Enviar compra al backend
-  const realizarCompra = async () => {
+ const realizarCompra = async () => {
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+  if (!idProveedor) {
+    Swal.fire("Error", "Seleccione un proveedor", "error");
+    console.log("Falta Proveedor");
+    return;
+  }
 
+  if (detalles.length === 0) {
+    Swal.fire("Error", "Debe agregar al menos un producto", "error");
+    console.log("Falta detalles de compra");
+    return;
+  }
 
-    if (!idProveedor) {
-      Swal.fire("Error", "Seleccione un proveedor", "error");
-      console.log("Falta Proveedor");
-      return;
-    }
+  const compra = {
+    noCompra,
+    noFactura,
+    fechaCompra,
+    idProveedor,
+    observaciones,
+    total,
+    detalles
+  };
 
-    if (detalles.length === 0) {
-      Swal.fire("Error", "Debe agregar al menos un producto", "error");
-      console.log("Falta detalles de compra");
-      return;
-    }
+  try {
+    const resp = await fetch(`${import.meta.env.VITE_API_URL}/compras/registrar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(compra)
+    });
 
-    const compra = {
-      noCompra,
-      noFactura,
-      fechaCompra,
-      idProveedor,
-      observaciones,
-      total,
-      detalles
-    };
+    const data = await resp.json();
 
-    try {
-      const resp = await fetch(`${import.meta.env.VITE_API_URL}/compras/registrar`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // <- aquí
-        },
-        body: JSON.stringify(compra)
+    if (resp.ok) {
+      Swal.fire({
+        icon: "success",
+        title: "Compra registrada correctamente",
+        text: "¿Desea descargar el comprobante?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, descargar",
+        cancelButtonText: "No"
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const resPDF = await fetch(`${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+
+            if (!resPDF.ok) throw new Error("Error al descargar PDF");
+
+            const blob = await resPDF.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            // Forzar descarga
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `ComprobanteCompra_${data.noCompra}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            console.log("PDF descargado correctamente");
+
+          } catch (error) {
+            console.error("Error al descargar PDF:", error);
+            Swal.fire("Error", "No se pudo descargar el PDF", "error");
+          }
+        }
+
+        // Mantener en el módulo de Compras
+        navigate("/registrarCompras");
       });
 
-      const data = await resp.json();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: data.mensaje || "Error al guardar"
+      });
 
-      if (resp.ok) {
-
-  Swal.fire({
-    icon: "success",
-    title: "Compra registrada correctamente",
-    text: "¿Desea imprimir el comprobante?",
-    showCancelButton: true,
-    confirmButtonText: "Sí, imprimir",
-    cancelButtonText: "No"
-  }).then((result) => {
-
-    if (result.isConfirmed) {
-      window.open(
-        `${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`,
-        "_blank"
-      );
+      if (resp.status === 401) {
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          navigate("/");
+        }, 2000);
+      }
     }
 
-    navigate("/compras");
-
-  });
-
-} else {
-
-  Swal.fire({
-    icon: "error",
-    title: "Error",
-    text: data.mensaje || "Error al guardar"
-  });
-
-  if (resp.status === 401) {
-    setTimeout(() => {
-      localStorage.removeItem("token");
-      navigate("/");
-    }, 2000);
+  } catch (error) {
+    console.error(error);
+    Swal.fire("Error", "No se pudo conectar al servidor", "error");
   }
-}
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire("Error", "No se pudo conectar al servidor", "error");
-    }
-  }
+};
 
 
 
