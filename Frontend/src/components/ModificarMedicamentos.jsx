@@ -58,7 +58,7 @@ function ModificarMedicamentos() {
 
 
         try {
-            const response = await fetch(`http://localhost:3000/medicamentos/actualizar/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/actualizar/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"

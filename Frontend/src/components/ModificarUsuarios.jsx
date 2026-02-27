@@ -62,7 +62,7 @@ function ModificarUsuarios() {
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/usuarios/actualizar/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/actualizar/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"

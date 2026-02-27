@@ -55,7 +55,7 @@ function ModificarClientes() {
         const data = { ...formData };
 
         try {
-            const response = await fetch(`http://localhost:3000/clientes/actualizar/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/clientes/actualizar/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
