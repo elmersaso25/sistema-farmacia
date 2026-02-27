@@ -44,7 +44,10 @@ function RegistrarUsuarios() {
         text: "El usuario fue registrado correctamente.",
         showConfirmButton: false,
         timer: 2000,
+      }).then(() =>{
+        navigate("/usuarios");
       });
+
       setFormData({
         nombreCompleto: "",
         celular: "",
@@ -103,7 +106,7 @@ function RegistrarUsuarios() {
                 <button className="btn btn-danger" onClick={() => navigate("/usuarios")}>Regresar</button>
             </div>
 
-            <div className="d-flex justify-content-center bg-light py-3 ">
+            <div className="d-flex justify-content-center py-3 ">
 
                 <div className="card shadow-sm" style={{ width: "45rem" }}>
 
