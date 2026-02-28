@@ -17,6 +17,7 @@ import RegistrarProveedores from './components/RegistrarProveedores';
 import ModificarProveedores from './components/ModificarProveedores';
 import Compras from './components/Compras';
 import RegistrarCompras from './components/RegistrarCompras';
+import Ventas from './components/Ventas';
 
 function App() {
   const location = useLocation(); // Obtén la ubicación actual
@@ -116,6 +117,12 @@ function App() {
         <Route path="/registrarCompras" element={
           <ProtectedRoute>
             <RegistrarCompras />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/ventas" element={
+          <ProtectedRoute>
+            <Ventas />
           </ProtectedRoute>
         } />
       </Routes>
