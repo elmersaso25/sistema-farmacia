@@ -10,6 +10,7 @@ const medicamentoRoute = require('./routes/medicamentoRoute');
 const clienteRoute = require('./routes/clienteRoute');
 const proveedorRoute = require('./routes/proveedorRoute');
 const compraRoute = require('./routes/compraRoute');
+const ventaRoute = require('./routes/ventaRoute');
 
 const app = express();
 
@@ -51,6 +52,9 @@ app.use('/proveedores', proveedorRoute);
 
 //Ruta de compras
 app.use('/compras', compraRoute);
+
+//Ruta de ventas
+app.use('/ventas', ventaRoute);
 
 // Puerto
 const PORT = process.env.PORT || 3000;
