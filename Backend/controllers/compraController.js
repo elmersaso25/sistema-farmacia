@@ -13,7 +13,6 @@ const obtenerCompras = async (req, res) => {
     }
 }
 
-//Funcion obtener compras por noCompra
 const obtenerDetallesCompra = async (req, res) => {
     const { id } = req.params;
 
