@@ -64,6 +64,69 @@ function Ventas(){
             }
         ];
 
+
+
+         const obtenerVentas = async () => {
+                console.log("1️⃣ Componente Ventas montado");
+        
+                try {
+                    const token = localStorage.getItem("token");
+                    console.log("3️⃣ Token obtenido");
+                    console.log(token);
+                    console.log("4️⃣ Antes del fetch");
+        
+                    if (!token) {
+                        console.log("❌ No hay token en localStorage");
+                        setLoading(false);
+                        return;
+                    }
+        
+                    console.log("4️⃣ Antes del fetch");
+        
+                    const response = await fetch(`${import.meta.env.VITE_API_URL}/ventas`, {
+                        method: "GET",
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    });
+        
+                    console.log("Status:", response.status);
+                    console.log("OK:", response.ok);
+        
+                    if (response.status === 401) {
+                        console.log("❌ Token inválido o expirado");
+        
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Sesión expirada",
+                            text: "Tu sesión ha expirado. Inicia sesión nuevamente.",
+                        }).then(() => {
+                            localStorage.removeItem("token");
+                            navigate("/");
+                        });
+        
+                        setLoading(false);
+                        return;
+                    }
+        
+                    const data = await response.json();
+                    console.log("7️⃣ Data recibida:", data);
+        
+                    setVentas(data);
+        
+                } catch (error) {
+                    console.log("🔥 Error en fetch:", error);
+                } finally {
+                    console.log("8️⃣ Finalizó fetch");
+                    setLoading(false);
+                }
+            }
+        
+            useEffect(() => {
+                obtenerVentas();
+            }, []);
+        
+
         //Filtrado por búsqueda
     const text = filterText.trim();
 
@@ -138,7 +201,7 @@ function Ventas(){
                 paginationRowsPerPageOptions={[5, 10, 25, 50]}
                 paginationPerPage={5}
 
-                noDataComponent="No hay registros para mostrar"
+                noDataComponent="No hay ventas para mostrar"
             />
         </div>
     );
