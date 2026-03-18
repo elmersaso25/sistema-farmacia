@@ -279,10 +279,6 @@ const anularCompra = async (req, res) => {
         res.json({
             message: "Compra anulada correctamente",
         });
-
-
-
-
     } catch (error) {
         await connection.rollback();
         res.status(500).json({
