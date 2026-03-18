@@ -143,34 +143,34 @@ const registrarVentas = async (req, res) => {
         // Insertar detalles y actualizar stock
         for (const item of detalles) {
 
-    const [medicamento] = await connection.query(
-        "SELECT precio FROM medicamentos WHERE idMedicamento = ?",
-        [item.idProducto]
-    );
+            const [medicamento] = await connection.query(
+                "SELECT precio FROM medicamentos WHERE idMedicamento = ?",
+                [item.idProducto]
+            );
 
-    const precio = medicamento[0].precio;
-    const subtotal = item.cantidad * precio;
+            const precio = medicamento[0].precio;
+            const subtotal = item.cantidad * precio;
 
-    await connection.query(
-        "INSERT INTO detalleVentas (noVenta, idProducto, cantidad, precio, subtotal) VALUES (?, ?, ?, ?, ?)",
-        [
-            noVenta,
-            item.idProducto,
-            item.cantidad,
-            precio,
-            subtotal
-        ]
-    );
+            await connection.query(
+                "INSERT INTO detalleVentas (noVenta, idProducto, cantidad, precio, subtotal) VALUES (?, ?, ?, ?, ?)",
+                [
+                    noVenta,
+                    item.idProducto,
+                    item.cantidad,
+                    precio,
+                    subtotal
+                ]
+            );
 
-    const [updateStock] = await connection.query(
-        "UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ? AND stock >= ?",
-        [item.cantidad, item.idProducto, item.cantidad]
-    );
+            const [updateStock] = await connection.query(
+                "UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ? AND stock >= ?",
+                [item.cantidad, item.idProducto, item.cantidad]
+            );
 
-    if (updateStock.affectedRows === 0) {
-        throw new Error("Stock insuficiente al actualizar");
-    }
-}
+            if (updateStock.affectedRows === 0) {
+                throw new Error("Stock insuficiente al actualizar");
+            }
+        }
 
         await connection.commit();
 
@@ -232,4 +232,331 @@ const obtenerDatosIniciales = async (req, res) => {
 };
 
 
-module.exports = { obtenerVentas, obtenerDetallesVenta, registrarVentas, obtenerDatosIniciales };
+//Funcion anular Venta
+const anularVenta = async (req, res) => {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [venta] = await connection.query("SELECT estadoVenta FROM ventas WHERE noVenta = ?",
+            [id]);
+
+        if (venta.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({
+                message: "La venta no existe",
+            });
+        }
+
+        if (venta[0].estado === "Anulada") {
+            await connection.rollback();
+            return res.status(404).json({
+                message: "La venta ya esta anulada",
+            });
+        }
+
+        const [detalles] = await connection.query("SELECT idProducto, cantidad FROM detalleVentas WHERE noVenta = ?",
+            [id]);
+
+        for (const detalle of detalles) {
+            await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
+                [detalle.cantidad, detalle.idMedicamento]);
+        }
+
+        await connection.query("UPDATE ventas SET estadoVenta = 'Anulada' WHERE noVenta = ?",
+            [id]);
+
+        await connection.query("UPDATE detalleVentas SET anulado = 1 WHERE noVenta = ?",
+            [id]);
+
+        await connection.commit();
+
+        res.json({
+            message: "Venta anulada correctamente",
+        });
+
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json({
+            message: "Error al anular la venta",
+            error: error.message,
+        });
+    }
+    finally {
+        connection.release();
+    }
+}
+
+// Funcion anular producto de una venta
+const anularProductoVenta = async (req, res) => {
+    const { idDetalle } = req.params;
+    const idUsuario = req.usuario.idUsuario;
+    const { cantidadAnular } = req.body;
+
+    const connection = await pool.getConnection();
+
+    try {
+
+        await connection.beginTransaction();
+
+        // 1. Obtener detalle
+        const [detalle] = await connection.query(
+            `SELECT noVenta, idProducto, cantidad, precio, subtotal, anulado
+             FROM detalleVentas
+             WHERE idDetalle = ?`,
+            [idDetalle]
+        );
+
+        if (detalle.length === 0) {
+            throw new Error("El detalle de venta no existe");
+        }
+
+        if (detalle[0].anulado === 1) {
+            throw new Error("Este producto ya fue anulado");
+        }
+
+        const { noVenta, idProducto, cantidad, precio } = detalle[0];
+
+        if (cantidadAnular > cantidad) {
+            throw new Error("Cantidad a anular mayor que la vendida");
+        }
+
+        const nuevaCantidad = cantidad - cantidadAnular;
+
+        if (nuevaCantidad === 0) {
+            // 2. Marcar detalle como anulado
+            await connection.query(
+                "UPDATE detalleVentas SET anulado = 1 WHERE idDetalle = ?",
+                [idDetalle]
+            );
+        } else {
+            const nuevoSubtotal = precio * nuevaCantidad;
+
+
+            await connection.query(
+                "Update detalleVentas SET cantidad = ?, subtotal = ? WHERE idDetalle = ?",
+                [nuevaCantidad, nuevoSubtotal, idDetalle]
+            );
+        }
+
+        // 3. Devolver stock
+        await connection.query(
+            "UPDATE medicamentos SET stock = stock + ? WHERE idMedicamento = ?",
+            [cantidadAnular, idProducto]
+        );
+
+        // 4. Recalcular total de la venta
+        const [total] = await connection.query(
+            `SELECT SUM(subtotal) AS total
+             FROM detalleVentas
+             WHERE noVenta = ? AND anulado = 0`,
+            [noVenta]
+        );
+
+        const nuevoTotal = total[0].total || 0;
+
+        // 5. Actualizar total de la venta
+        await connection.query(
+            "UPDATE ventas SET totalVenta = ? WHERE noVenta = ?",
+            [nuevoTotal, noVenta]
+        );
+
+        await connection.commit();
+
+        const mensaje = nuevaCantidad === 0
+            ? "Producto anulado completamente"
+            : "Producto anulado parcialmente";
+
+        res.json({
+            mensaje,
+            noVenta,
+            nuevoTotal
+        });
+
+    } catch (error) {
+
+        await connection.rollback();
+
+        res.status(400).json({
+            mensaje: "Error al anular el producto",
+            error: error.message
+        });
+
+    } finally {
+        connection.release();
+    }
+};
+
+//Funcion mostrar total ventas del dia
+const obtenerTotalVentasDelDia = async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasDelDia FROM ventas WHERE fechaVenta >= CURDATE() AND fechaVenta < CURDATE() + INTERVAL 1 DAY;");
+        res.json({
+            totalVentasDelDia: rows[0].ventasDelDia
+        })
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener total de ventas al dia" });
+    }
+}
+
+
+//Funcion mostrar total todas las ventas 
+const obtenerTotalVentas = async (req, res) => {
+    try {
+        const [rows] = await pool.query(" SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasTotales FROM ventas");
+        res.json({
+            totalVentas: rows[0].ventasTotales
+        })
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener total de ventas" });
+    }
+}
+
+
+//************************************************************//
+const generarPDFVenta = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [venta] = await pool.query("SELECT v.noVenta, v.noFactura, v.fechaVenta, c.nombreCompleto, c.nit, v.totalVenta, v.estadoVenta FROM ventas v INNER JOIN clientes c ON v.idCliente = c.idCliente WHERE v.noVenta = ?", [id]);
+
+        if (venta.length === 0) {
+            return res.status(404).json({ message: "Venta no encontrada" });
+        }
+
+        const fecha = new Date(venta[0].fechaVenta);
+        const fechaFormateada = fecha.toLocaleDateString("es-GT");
+
+        const [detalle] = await pool.query(
+            "SELECT CONCAT(m.nombreMedicamento,'',m.descripcion) AS medicamento, d.cantidad, d.precio, d.subtotal FROM detalleVentas d INNER JOIN medicamentos m ON d.idProducto = m.idMedicamento WHERE noVenta = ?;", [id]);
+
+        const doc = new PDFDocument({ margin: 50 });
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=factura_${id}.pdf`
+        );
+
+        doc.pipe(res);
+
+        // 🔹 TÍTULO
+        doc
+            .font("Helvetica-Bold")
+            .fontSize(18)
+            .text("FARMACIA EL AHORRO", { align: "center" });
+
+        doc
+            .fontSize(15)
+            .text("FACTURA", { align: "center" });
+
+        doc.moveDown(2);
+
+    // 🔹 DATOS GENERALES
+doc
+    .font("Helvetica")
+    .fontSize(12)
+    .lineGap(4); // 👈 interlineado
+
+doc
+    .font("Helvetica-Bold")
+    .text("No. Venta: ", { continued: true })
+    .font("Helvetica")
+    .text(venta[0].noVenta);
+
+doc
+    .font("Helvetica-Bold")
+    .text("Factura: ", { continued: true })
+    .font("Helvetica")
+    .text(venta[0].noFactura);
+
+doc
+    .font("Helvetica-Bold")
+    .text("Cliente: ", { continued: true })
+    .font("Helvetica")
+    .text(venta[0].nombreCompleto);
+
+doc
+    .font("Helvetica-Bold")
+    .text("NIT: ", { continued: true })
+    .font("Helvetica")
+    .text(venta[0].nit || "CF");
+
+doc
+    .font("Helvetica-Bold")
+    .text("Fecha: ", { continued: true })
+    .font("Helvetica")
+    .text(fechaFormateada);
+
+doc.moveDown();
+        // 🔹 Línea separadora
+        doc.moveTo(50, doc.y)
+            .lineTo(550, doc.y)
+            .stroke();
+
+        doc.moveDown();
+
+        // 🔹 Encabezado tabla
+        doc.fontSize(13).text("DETALLE DE PRODUCTOS");
+        doc.moveDown();
+
+        const tableTop = doc.y;
+
+     doc
+    .font("Helvetica-Bold")
+    .fontSize(11);
+
+doc.text("Medicamento", 50, tableTop);
+doc.text("Cantidad", 300, tableTop);
+doc.text("Precio", 380, tableTop);
+doc.text("Subtotal", 450, tableTop);
+
+// 🔹 volver a normal para las filas
+doc.font("Helvetica");
+
+doc.moveDown();
+
+        let y = doc.y;
+
+        // 🔹 Filas
+        detalle.forEach((item) => {
+            const subtotal = item.cantidad * item.precio;
+
+            doc.text(item.medicamento, 50, y);
+            doc.text(item.cantidad.toString(), 300, y);
+            doc.text(`Q${item.precio}`, 380, y);
+            doc.text(`Q${subtotal}`, 450, y);
+
+            y += 20;
+        });
+
+        doc.moveDown(2);
+
+        // 🔹 Línea antes del total
+        doc.moveTo(50, y)
+            .lineTo(550, y)
+            .stroke();
+
+        doc.moveDown();
+
+        // 🔹 TOTAL
+        doc
+            .fontSize(14)
+            .text(`TOTAL: Q${venta[0].totalVenta}`, 400, y + 20, { align: "right" });
+
+        doc
+            .fontSize(12)
+            .text("¡Gracias por su compra!", 50, y + 60, { align: "center" });
+
+        doc.end();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error generando PDF" });
+
+    }
+}
+
+module.exports = { obtenerVentas, obtenerDetallesVenta, registrarVentas, obtenerDatosIniciales, anularVenta, anularProductoVenta, obtenerTotalVentasDelDia, obtenerTotalVentas, generarPDFVenta };
