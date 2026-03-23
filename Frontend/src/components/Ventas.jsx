@@ -14,23 +14,35 @@ function Ventas(){
         const navigate = useNavigate();
 
 
+         const formatearFecha = (fecha) => {
+        if (!fecha) return "";
+        const fechaLocal = new Date(fecha);
+        return fechaLocal.toLocaleString("es-ES", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            //  hour: "2-digit",
+            //  minute: "2-digit"
+        });
+    };
+
 
 
     //Tabla para mostrar las compras
         const columns = [
-            { name: "No.", selector: (row) => row.noVenta, sortable: true, width: "80px", wrap: false },
+            { name: "No.", selector: (row) => row.noVenta, sortable: true, width: "100px", wrap: false },
     
             { name: "Factura", selector: (row) => row.noFactura, sortable: true, width: "150px", wrap: false },
     
-            { name: "Fecha", selector: (row) => formatearFecha(row.fechaVenta), sortable: true, width: "120px", wrap: false },
+            { name: "Fecha", selector: (row) => formatearFecha(row.fechaVenta), sortable: true, width: "150px", wrap: false },
     
-            { name: "Cliente", selector: (row) => row.nombreCliente, sortable: true, width: "200px", wrap: false },
+            { name: "Cliente", selector: (row) => row.nombreCompleto, sortable: true, width: "250px", wrap: false },
     
-            { name: "Total", selector: (row) => `Q${Number(row.totalVenta).toFixed(2)}`, sortable: true, width: "100px", wrap: false },
+            { name: "Total", selector: (row) => `Q${Number(row.totalVenta).toFixed(2)}`, sortable: true, width: "150px", wrap: false },
     
             { name: "Estado", selector: (row) => row.estadoVenta, sortable: true, width: "150px", wrap: false },
     
-            { name: "Observaciones", selector: (row) => row.observaciones, sortable: true, width: "250px", wrap: false },
     
             {
                 name: "Acciones", cell: (row) => <div style={{ display: "flex", gap: "6px" }}>
@@ -45,7 +57,7 @@ function Ventas(){
                         title={
                             row.estadoVenta === "Anulada"
                                 ? "Compra anulada"
-                                : "Anular compra"
+                                : "Anular Venta"
                         }
                         onClick={() => {
                             if (row.estadoVenta !== "Anulada") {

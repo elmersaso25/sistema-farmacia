@@ -14,6 +14,24 @@ function RegistrarVentas(){
   const [fechaVenta, setFechaVenta] = useState("");
 
 
+ //Fetch de datos de compra
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/ventas/datosIniciales`)
+      .then(res => res.json())
+      .then(data => {
+        setNoVenta(data.siguienteVenta);
+        setNoFactura(data.siguienteFactura);
+        setFechaVenta(data.fechaVenta);
+      })
+      .catch(err => console.error("Error:", err));
+  }, []);
+
+
+
+
+
+
+
 
 
   const formatearFecha = (fecha) => {

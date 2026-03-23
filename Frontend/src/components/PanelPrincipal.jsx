@@ -11,6 +11,8 @@ function PanelPrincipal() {
   const [totalProveedores, setTotalProveedores] = useState(0);
   const [totalCompras, setTotalCompras] = useState(0);
   const [totalStockMedicamentos, setTotalStockMedicamentos] = useState(0);
+  const [totalVentasDelDia, setTotalVentasDelDia] = useState("0.00");
+  const [totalVentas, setTotalVentas] = useState("0.00");
 
 
 
@@ -103,7 +105,45 @@ function PanelPrincipal() {
       }
     }
     obtenerTotalStockMedicamentos();
-  },[])
+  }, [])
+
+useEffect(() => {
+  //Fetch para obtener total ventas del dia
+  const obtenerTotalVentasDelDia = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ventas/totalVentasDelDia`);
+      const data = await response.json();
+
+      const total = parseFloat(data.totalVentasDelDia || 0);
+
+      setTotalVentasDelDia(total.toFixed(2));
+
+
+    } catch (error) {
+      console.error("Error al obtener total de ventas al dia", error);
+    }
+  }
+  obtenerTotalVentasDelDia();
+  }, [])
+
+   //Fetch para obtener total ventas
+   useEffect(() => {
+  const obtenerTotalVentas = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ventas/totalVentas`);
+      const data = await response.json();
+
+      const total = parseFloat(data.totalVentas || 0);
+
+      setTotalVentas(total.toFixed(2));
+
+
+    } catch (error) {
+      console.error("Error al obtener total de ventas", error);
+    }
+  }
+  obtenerTotalVentas();
+  }, [])
 
 
   return (
@@ -171,7 +211,7 @@ function PanelPrincipal() {
             <div className="card dashboard-card bg-success text-white shadow-sm">
               <div className="card-body">
                 <h5><i className="fa-solid fa-dollar-sign me-2"></i>Ventas Hoy</h5>
-                <h2>Q2,340</h2>
+                <h2>Q{totalVentasDelDia}</h2>
               </div>
             </div>
           </div>
@@ -180,7 +220,7 @@ function PanelPrincipal() {
             <div className="card dashboard-card bg-secondary text-white shadow-sm">
               <div className="card-body">
                 <h5><i className="fa-solid fa-tags me-2"></i>Ventas Totales</h5>
-                <h2>Q12,580</h2>
+                <h2>Q{totalVentas}</h2>
               </div>
             </div>
           </div>

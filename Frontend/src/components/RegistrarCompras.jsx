@@ -77,7 +77,7 @@ function RegistrarCompras() {
 
   //Fetch de datos de compra
   useEffect(() => {
-    fetch("http://localhost:3000/compras/datosIniciales")
+    fetch(`${import.meta.env.VITE_API_URL}/compras/datosIniciales`)
       .then(res => res.json())
       .then(data => {
         setNoCompra(data.siguienteCompra);
@@ -88,7 +88,7 @@ function RegistrarCompras() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:3000/proveedores/activos")
+    fetch(`${import.meta.env.VITE_API_URL}/proveedores/activos`)
       .then(res => res.json())
       .then(data => {
         setProveedores(data);
