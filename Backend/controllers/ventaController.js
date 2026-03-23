@@ -544,7 +544,7 @@ doc.moveDown();
 
         // 🔹 TOTAL
         doc
-            .fontSize(14)
+            .fontSize(12)
             .text(`TOTAL: Q${venta[0].totalVenta}`, 400, y + 20, { align: "right" });
 
         doc
