@@ -6,3 +6,21 @@
 .form-altura{
   margin-top: 80px;
 }
+
+.modal-custom {
+  position: fixed;          /* 👈 lo saca del container */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  z-index: 9999;
+}
+
+.modal-box {
+  width: 500px;             /* 👈 ancho pequeño */
+  max-width: 90%;           /* 👈 responsive */
+  
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 5px 25px rgba(0,0,0,0.2);
+}
