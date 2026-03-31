@@ -160,4 +160,86 @@ const obtenerTotalClientes = async (req, res) => {
     }
 }
 
-module.exports = { obtenerClientes, obtenerClientesPorId, registrarClientes, actualizarClientes, obtenerTotalClientes }
+const obtenerClientesPorNit = async (req, res) => {
+    let { nit } = req.params;
+
+    if (!nit) {
+        return res.status(400).json({ mensaje: "No se proporcionó NIT" });
+    }
+
+    nit = nit.trim();
+   // console.log("NIT después de trim:", `[${nit}]`);
+
+    try {
+        const [rows] = await pool.query(
+            "SELECT * FROM clientes WHERE TRIM(nit) = ?",
+            [nit]
+        );
+
+
+        if (rows.length === 0) {
+         //   console.log("Cliente no encontrado");
+            return res.status(404).json({ mensaje: "Cliente no encontrado" });
+        }
+
+        console.log("✅ Cliente encontrado:", rows[0]);
+        return res.status(200).json(rows[0]);
+
+    } catch (error) {
+        console.error("Error al obtener cliente por NIT", error);
+        return res.status(500).json({ mensaje: "Error al obtener cliente por NIT" });
+    }
+};
+
+
+
+const registrarClientesDesdeVentas = async (req, res) => { 
+  const { nombreCompleto, celular, nit, direccion } = req.body;
+  const errores = {};
+
+  try {
+    // Validación campos obligatorios, excepto celular
+    if (!nombreCompleto || !nit || !direccion) {
+      return res.status(400).json({
+        errores: { general: "Nombre, NIT y dirección son obligatorios" }
+      });
+    }
+
+    // Validación celular solo si se proporciona
+    if (celular) {
+      const regexCelular = /^[0-9]{8}$/;
+      if (!regexCelular.test(celular)) {
+        errores.celular = "El número de celular debe tener 8 dígitos";
+      }
+    }
+
+    // Validación NIT
+    const regexNit = /^[0-9]{6,12}(-[0-9])?$/;
+    if (!regexNit.test(nit)) {
+      errores.nit = "Ingrese un NIT válido";
+    }
+
+    if (Object.keys(errores).length > 0) {
+      return res.status(400).json({ errores });
+    }
+
+    const telefono = celular || "00000000"; // poner un valor por defecto si no hay
+
+    const [result] = await pool.query(
+      "INSERT INTO clientes(nombreCompleto,celular,nit,direccion) VALUES(?,?,?,?)",
+      [nombreCompleto, telefono, nit, direccion]
+    );
+
+    // Retornar el cliente creado con idCliente
+    const [rows] = await pool.query("SELECT * FROM clientes WHERE idCliente = ?", [result.insertId]);
+
+    res.status(201).json(rows[0]);
+
+  } catch (error) {
+    console.error("Error al registrar cliente", error);
+    res.status(500).json({ mensaje: "Error al registrar cliente" });
+  }
+};
+
+
+module.exports = { obtenerClientes, obtenerClientesPorId, registrarClientes, actualizarClientes, obtenerTotalClientes, obtenerClientesPorNit, registrarClientesDesdeVentas }
