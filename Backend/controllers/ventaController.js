@@ -73,12 +73,12 @@ const registrarVentas = async (req, res) => {
 
         // ✅ Validar detalles
         for (let i = 0; i < detalles.length; i++) {
-            const { idProducto, cantidad } = detalles[i];
+            const { idMedicamento, cantidad } = detalles[i];
 
             // Validar stock medicamento
             const [medicamento] = await connection.query(
-                "SELECT idMedicamento, precio, stock FROM medicamentos WHERE idMedicamento = ?",
-                [idProducto]
+                "SELECT precio FROM medicamentos WHERE idMedicamento = ?",
+                [idMedicamento]
             );
 
             if (medicamento.length === 0) {
@@ -144,8 +144,8 @@ const registrarVentas = async (req, res) => {
         for (const item of detalles) {
 
             const [medicamento] = await connection.query(
-                "SELECT precio FROM medicamentos WHERE idMedicamento = ?",
-                [item.idProducto]
+                "SELECT precio, stock FROM medicamentos WHERE idMedicamento = ?",
+                [item.idMedicamento]
             );
 
             const precio = medicamento[0].precio;
@@ -155,7 +155,7 @@ const registrarVentas = async (req, res) => {
                 "INSERT INTO detalleVentas (noVenta, idProducto, cantidad, precio, subtotal) VALUES (?, ?, ?, ?, ?)",
                 [
                     noVenta,
-                    item.idProducto,
+                    item.idMedicamento,
                     item.cantidad,
                     precio,
                     subtotal
@@ -164,7 +164,7 @@ const registrarVentas = async (req, res) => {
 
             const [updateStock] = await connection.query(
                 "UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ? AND stock >= ?",
-                [item.cantidad, item.idProducto, item.cantidad]
+                [item.cantidad, item.idMedicamento, item.cantidad]
             );
 
             if (updateStock.affectedRows === 0) {
@@ -263,7 +263,7 @@ const anularVenta = async (req, res) => {
 
         for (const detalle of detalles) {
             await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
-                [detalle.cantidad, detalle.idMedicamento]);
+                [detalle.cantidad, detalle.idProducto]);
         }
 
         await connection.query("UPDATE ventas SET estadoVenta = 'Anulada' WHERE noVenta = ?",
@@ -393,7 +393,7 @@ const anularProductoVenta = async (req, res) => {
 //Funcion mostrar total ventas del dia
 const obtenerTotalVentasDelDia = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasDelDia FROM ventas WHERE fechaVenta >= CURDATE() AND fechaVenta < CURDATE() + INTERVAL 1 DAY;");
+        const [rows] = await pool.query("SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasDelDia FROM ventas WHERE fechaVenta >= CURDATE() AND fechaVenta < CURDATE() + INTERVAL 1 DAY AND estadoVenta ='Completada'");
         res.json({
             totalVentasDelDia: rows[0].ventasDelDia
         })
@@ -406,7 +406,7 @@ const obtenerTotalVentasDelDia = async (req, res) => {
 //Funcion mostrar total todas las ventas 
 const obtenerTotalVentas = async (req, res) => {
     try {
-        const [rows] = await pool.query(" SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasTotales FROM ventas");
+        const [rows] = await pool.query(" SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasTotales FROM ventas WHERE estadoVenta ='Completada'");
         res.json({
             totalVentas: rows[0].ventasTotales
         })
@@ -455,43 +455,43 @@ const generarPDFVenta = async (req, res) => {
 
         doc.moveDown(2);
 
-    // 🔹 DATOS GENERALES
-doc
-    .font("Helvetica")
-    .fontSize(12)
-    .lineGap(4); // 👈 interlineado
+        // 🔹 DATOS GENERALES
+        doc
+            .font("Helvetica")
+            .fontSize(12)
+            .lineGap(4); // 👈 interlineado
 
-doc
-    .font("Helvetica-Bold")
-    .text("No. Venta: ", { continued: true })
-    .font("Helvetica")
-    .text(venta[0].noVenta);
+        doc
+            .font("Helvetica-Bold")
+            .text("No. Venta: ", { continued: true })
+            .font("Helvetica")
+            .text(venta[0].noVenta);
 
-doc
-    .font("Helvetica-Bold")
-    .text("Factura: ", { continued: true })
-    .font("Helvetica")
-    .text(venta[0].noFactura);
+        doc
+            .font("Helvetica-Bold")
+            .text("Factura: ", { continued: true })
+            .font("Helvetica")
+            .text(venta[0].noFactura);
 
-doc
-    .font("Helvetica-Bold")
-    .text("Cliente: ", { continued: true })
-    .font("Helvetica")
-    .text(venta[0].nombreCompleto);
+        doc
+            .font("Helvetica-Bold")
+            .text("Cliente: ", { continued: true })
+            .font("Helvetica")
+            .text(venta[0].nombreCompleto);
 
-doc
-    .font("Helvetica-Bold")
-    .text("NIT: ", { continued: true })
-    .font("Helvetica")
-    .text(venta[0].nit || "CF");
+        doc
+            .font("Helvetica-Bold")
+            .text("NIT: ", { continued: true })
+            .font("Helvetica")
+            .text(venta[0].nit || "CF");
 
-doc
-    .font("Helvetica-Bold")
-    .text("Fecha: ", { continued: true })
-    .font("Helvetica")
-    .text(fechaFormateada);
+        doc
+            .font("Helvetica-Bold")
+            .text("Fecha: ", { continued: true })
+            .font("Helvetica")
+            .text(fechaFormateada);
 
-doc.moveDown();
+        doc.moveDown();
         // 🔹 Línea separadora
         doc.moveTo(50, doc.y)
             .lineTo(550, doc.y)
@@ -505,19 +505,19 @@ doc.moveDown();
 
         const tableTop = doc.y;
 
-     doc
-    .font("Helvetica-Bold")
-    .fontSize(11);
+        doc
+            .font("Helvetica-Bold")
+            .fontSize(11);
 
-doc.text("Medicamento", 50, tableTop);
-doc.text("Cantidad", 300, tableTop);
-doc.text("Precio", 380, tableTop);
-doc.text("Subtotal", 450, tableTop);
+        doc.text("Medicamento", 50, tableTop);
+        doc.text("Cantidad", 300, tableTop);
+        doc.text("Precio", 380, tableTop);
+        doc.text("Subtotal", 450, tableTop);
 
-// 🔹 volver a normal para las filas
-doc.font("Helvetica");
+        // 🔹 volver a normal para las filas
+        doc.font("Helvetica");
 
-doc.moveDown();
+        doc.moveDown();
 
         let y = doc.y;
 
