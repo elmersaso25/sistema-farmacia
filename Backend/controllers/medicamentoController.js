@@ -220,7 +220,7 @@ const obtenerTotalMedicamentos = async (req, res) => {
 
 const obtenerTotalStockMedicamentos = async (req,res) => {
     try {
-        const [rows] = await pool.query("SELECT SUM(stock) AS stockTotal FROM medicamentos;");
+        const [rows] = await pool.query("SELECT IFNULL (SUM(stock), 0) AS stockTotal FROM medicamentos;");
         res.json({
             stockTotal: rows[0].stockTotal
         });
