@@ -29,7 +29,7 @@ function ModificarClientes() {
     useEffect(() => {
         const obtenerCliente = async () => {
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes/${id}`);
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes/id/${id}`);
                 const data = await res.json();
 
                 setFormData({

@@ -221,7 +221,7 @@ const obtenerDatosIniciales = async (req, res) => {
         res.json({
             siguienteVenta: ultimaVenta + 1,
             siguienteFactura: noFacturaFormateada,
-            fechaVenta: new Date().toISOString().split("T")[0]
+            fechaVenta: new Date().toLocaleDateString("en-CA")
         });
     } catch (error) {
         console.error("Error en obtenerDatosIniciales:", error);
