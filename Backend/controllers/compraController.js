@@ -305,6 +305,7 @@ const obtenerTotalCompras = async (req, res) => {
     }
 }
 
+//##############################################################################################
 const generarPDFCompra = async (req, res) => {
     const { id } = req.params;
 
@@ -333,21 +334,46 @@ const generarPDFCompra = async (req, res) => {
 
         // 🔹 TÍTULO
         doc
-            .fontSize(20)
+            .font("Helvetica-Bold")
+            .fontSize(18)
             .text("FARMACIA EL AHORRO", { align: "center" });
 
         doc
-            .fontSize(16)
-            .text("COMPROBANTE DE COMPRA", { align: "center" });
+            .fontSize(15)
+            .text("COMPROBANTE", { align: "center" });
 
         doc.moveDown(2);
 
+
         // 🔹 DATOS GENERALES
-        doc.fontSize(12);
-        doc.text(`No. Compra: ${compra[0].noCompra}`);
-        doc.text(`No. Comprobante: ${compra[0].noFactura}`);
-        doc.text(`Proveedor: ${compra[0].nombreProveedor}`);
-        doc.text(`Fecha: ${fechaFormateada}`);
+        doc
+            .font("Helvetica")
+            .fontSize(12)
+            .lineGap(4); // 👈 interlineado
+
+        doc
+            .font("Helvetica-Bold")
+            .text("No. Compra: ", { continued: true })
+            .font("Helvetica")
+            .text(compra[0].noCompra);
+
+        doc
+            .font("Helvetica-Bold")
+            .text("Comprante de Compra: ", { continued: true })
+            .font("Helvetica")
+            .text(compra[0].noFactura);
+
+        doc
+            .font("Helvetica-Bold")
+            .text("Proveedor: ", { continued: true })
+            .font("Helvetica")
+            .text(compra[0].nombreProveedor);
+
+        doc
+            .font("Helvetica-Bold")
+            .text("Fecha: ", { continued: true })
+            .font("Helvetica")
+            .text(fechaFormateada);
 
         doc.moveDown();
 
@@ -362,13 +388,19 @@ const generarPDFCompra = async (req, res) => {
         doc.fontSize(13).text("DETALLE DE PRODUCTOS");
         doc.moveDown();
 
-        const tableTop = doc.y;
+         const tableTop = doc.y;
 
-        doc.fontSize(11);
+        doc
+            .font("Helvetica-Bold")
+            .fontSize(11);
+
         doc.text("Medicamento", 50, tableTop);
         doc.text("Cantidad", 300, tableTop);
         doc.text("Precio", 380, tableTop);
         doc.text("Subtotal", 450, tableTop);
+
+        // 🔹 volver a normal para las filas
+        doc.font("Helvetica");
 
         doc.moveDown();
 
@@ -397,8 +429,8 @@ const generarPDFCompra = async (req, res) => {
 
         // 🔹 TOTAL
         doc
-            .fontSize(14)
-            .text(`TOTAL: Q${compra[0].totalCompra}`, 400, y + 20, { align: "right" });
+            .fontSize(12)
+            .text(`TOTAL COMPRA: Q${compra[0].totalCompra}`, 400, y + 20, { align: "right" });
 
         doc.end();
     } catch (error) {

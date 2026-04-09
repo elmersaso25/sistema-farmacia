@@ -492,6 +492,7 @@ const generarPDFVenta = async (req, res) => {
             .text(fechaFormateada);
 
         doc.moveDown();
+        
         // 🔹 Línea separadora
         doc.moveTo(50, doc.y)
             .lineTo(550, doc.y)
