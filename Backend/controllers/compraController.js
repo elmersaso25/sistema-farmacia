@@ -256,7 +256,7 @@ const anularCompra = async (req, res) => {
             });
         }
 
-        if (compra[0].estado === "Anulada") {
+        if (compra[0].estadoCompra === "Anulada") {
             await connection.rollback();
             return res.status(404).json({
                 message: "La compra ya esta anulada",
@@ -265,6 +265,23 @@ const anularCompra = async (req, res) => {
 
         const [detalles] = await connection.query("SELECT idMedicamento, cantidad FROM detalleCompras WHERE noCompra = ?",
             [id]);
+
+
+            // 🔒 VALIDAR ANTES DE TOCAR STOCK
+for (const detalle of detalles) {
+    const [ventas] = await connection.query(`
+        SELECT SUM(cantidad) as totalVendida
+        FROM detalleVentas
+        WHERE idProducto = ?
+    `, [detalle.idMedicamento]);
+
+    if (ventas[0].totalVendida && ventas[0].totalVendida > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+            message: "No se puede anular la compra, ya se han vendido productos asociados"
+        });
+    }
+}
 
         for (const detalle of detalles) {
             await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
