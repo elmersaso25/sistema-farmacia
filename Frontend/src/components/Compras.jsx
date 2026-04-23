@@ -201,6 +201,8 @@ function Compras() {
                 }
             );
 
+            const data = await response.json();
+
             if (response.status === 401) {
                 Swal.fire({
                     icon: "warning",
@@ -214,7 +216,7 @@ function Compras() {
             }
 
             if (!response.ok) {
-                throw new Error("Error al anular la compra");
+                throw new Error(data.message);
             }
 
             await obtenerCompras();
@@ -222,7 +224,7 @@ function Compras() {
             Swal.fire({
                 icon: "success",
                 title: "Compra anulada",
-                text: "Compra anulada correctamente",
+                text: data.message,
                 timer: 1500,
                 showConfirmButton: false
             });

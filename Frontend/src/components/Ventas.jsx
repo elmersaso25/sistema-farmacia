@@ -18,6 +18,11 @@ function Ventas() {
     const [detallesVenta, setDetallesVenta] = useState([]);
 
 
+    const [mostrarModalAnular, setMostrarModalAnular] = useState(false);
+    const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+    const [cantidadAnular, setCantidadAnular] = useState("");
+
+
     const formatearFecha = (fecha) => {
         if (!fecha) return "";
         const fechaLocal = new Date(fecha);
@@ -130,9 +135,47 @@ function Ventas() {
     }
 
 
+    const confirmarAnulacionProducto = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/ventas/anularProductoVenta/${productoSeleccionado.idDetalle}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({
+                            cantidadAnular: Number(cantidadAnular)
+                    })
+                }
+            );
 
+            if (!response.ok) {
+                throw new Error("Error al anular producto");
+            }
 
+            Swal.fire({
+                icon: "success",
+                title: "Producto anulado correctamente",
+                timer: 1500,
+                showConfirmButton: false
+            });
 
+            setMostrarModalAnular(false);
+            setCantidadAnular("");
+
+            // Recargar detalles
+            verDetalles(ventaSeleccionada.noVenta, ventaSeleccionada);
+
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.message
+            });
+        }
+    };
 
 
 
@@ -292,6 +335,7 @@ function Ventas() {
     const ventaAnulada = ventaSeleccionada?.estadoVenta === "Anulada";
 
 
+
     return (
         <div className="container-custom">
             <div className="p-4">
@@ -365,7 +409,8 @@ function Ventas() {
                                             title={ventaAnulada ? "Venta anulada" : "Anular producto"}
                                             onClick={() => {
                                                 if (!ventaAnulada) {
-                                                    anularProducto(detalle);
+                                                    setProductoSeleccionado(detalle);
+                                                    setMostrarModalAnular(true);
                                                 }
                                             }}
                                             disabled={ventaAnulada}
@@ -390,6 +435,34 @@ function Ventas() {
                         </tbody>
                     </table>
                 )}
+            </Modal>
+
+
+            <Modal
+                isOpen={mostrarModalAnular}
+                onClose={() => setMostrarModalAnular(false)}
+                title="Anular producto"
+                size="sm"
+            >
+                <div>
+                    <p><strong>Producto:</strong> {productoSeleccionado?.nombreProducto}</p>
+
+                    <label>Cantidad a anular:</label>
+                    <input
+                        type="number"
+                        className="form-control"
+                        value={cantidadAnular}
+                        onChange={(e) => setCantidadAnular(Number(e.target.value))}
+                        min="1"
+                    />
+
+                    <button
+                        className="btn btn-danger mt-3"
+                        onClick={confirmarAnulacionProducto}
+                    >
+                        Confirmar
+                    </button>
+                </div>
             </Modal>
         </div>
     );

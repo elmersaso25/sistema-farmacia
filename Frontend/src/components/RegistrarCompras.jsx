@@ -204,106 +204,115 @@ function RegistrarCompras() {
 
 
   //Enviar compra al backend
- const realizarCompra = async () => {
-  const token = localStorage.getItem("token");
+  const realizarCompra = async () => {
+    const token = localStorage.getItem("token");
 
-  if (!idProveedor) {
-    Swal.fire("Error", "Seleccione un proveedor", "error");
-    console.log("Falta Proveedor");
-    return;
-  }
-
-  if (detalles.length === 0) {
-    Swal.fire("Error", "Debe agregar al menos un producto", "error");
-    console.log("Falta detalles de compra");
-    return;
-  }
-
-  const compra = {
-    noCompra,
-    noFactura,
-    fechaCompra,
-    idProveedor,
-    observaciones,
-    total,
-    detalles
-  };
-
-  try {
-    const resp = await fetch(`${import.meta.env.VITE_API_URL}/compras/registrar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(compra)
-    });
-
-    const data = await resp.json();
-
-    if (resp.ok) {
-      Swal.fire({
-        icon: "success",
-        title: "Compra registrada correctamente",
-        text: "¿Desea descargar el comprobante?",
-        showCancelButton: true,
-        confirmButtonText: "Sí, descargar",
-        cancelButtonText: "No"
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            const resPDF = await fetch(`${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`, {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            });
-
-            if (!resPDF.ok) throw new Error("Error al descargar PDF");
-
-            const blob = await resPDF.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            // Forzar descarga
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `ComprobanteCompra_${data.noCompra}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-
-            console.log("PDF descargado correctamente");
-
-          } catch (error) {
-            console.error("Error al descargar PDF:", error);
-            Swal.fire("Error", "No se pudo descargar el PDF", "error");
-          }
-        }
-
-        // Mantener en el módulo de Compras
-        navigate("/registrarCompras");
-      });
-
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: data.mensaje || "Error al guardar"
-      });
-
-      if (resp.status === 401) {
-        setTimeout(() => {
-          localStorage.removeItem("token");
-          navigate("/");
-        }, 2000);
-      }
+    if (!idProveedor) {
+      Swal.fire("Error", "Seleccione un proveedor", "error");
+      console.log("Falta Proveedor");
+      return;
     }
 
-  } catch (error) {
-    console.error(error);
-    Swal.fire("Error", "No se pudo conectar al servidor", "error");
-  }
-};
+    if (detalles.length === 0) {
+      Swal.fire("Error", "Debe agregar al menos un producto", "error");
+      console.log("Falta detalles de compra");
+      return;
+    }
+
+    const compra = {
+      noCompra,
+      noFactura,
+      fechaCompra,
+      idProveedor,
+      observaciones,
+      total,
+      detalles
+    };
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL}/compras/registrar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(compra)
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Compra registrada correctamente",
+          text: "¿Desea descargar el comprobante?",
+          showCancelButton: true,
+          confirmButtonText: "Sí, descargar",
+          cancelButtonText: "No"
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              const resPDF = await fetch(`${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`, {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+
+              if (!resPDF.ok) throw new Error("Error al descargar PDF");
+
+              const blob = await resPDF.blob();
+              const url = window.URL.createObjectURL(blob);
+
+              // Forzar descarga
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `ComprobanteCompra_${data.noCompra}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+
+              console.log("PDF descargado correctamente");
+
+            } catch (error) {
+              console.error("Error al descargar PDF:", error);
+              Swal.fire("Error", "No se pudo descargar el PDF", "error");
+            }
+          }
+
+          // Mantener en el módulo de Compras
+          navigate("/registrarCompras");
+          setCarrito([]);
+          setDetalles([]);        // si usas detalles
+          setTotal(0);
+          setIdProveedor("");
+          setObservaciones("");
+          setNoFactura("");
+
+          // Limpiar localStorage si usas carrito ahí
+          localStorage.removeItem("carrito");
+        });
+
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.mensaje || "Error al guardar"
+        });
+
+        if (resp.status === 401) {
+          setTimeout(() => {
+            localStorage.removeItem("token");
+            navigate("/");
+          }, 2000);
+        }
+      }
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "No se pudo conectar al servidor", "error");
+    }
+  };
 
 
 
