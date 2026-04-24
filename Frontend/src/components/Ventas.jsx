@@ -192,7 +192,7 @@ function Ventas() {
 
         { name: "Total", selector: (row) => `Q${Number(row.totalVenta).toFixed(2)}`, sortable: true, width: "150px", wrap: false },
 
-        { name: "Estado", selector: (row) => row.estadoVenta, sortable: true, width: "150px", wrap: false },
+        { name: "Estado", selector: (row) => row.estadoVenta, sortable: true, width: "200px", wrap: false },
 
 
         {
