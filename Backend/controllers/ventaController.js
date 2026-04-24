@@ -77,7 +77,7 @@ const registrarVentas = async (req, res) => {
 
             // Validar stock medicamento
             const [medicamento] = await connection.query(
-                "SELECT precio FROM medicamentos WHERE idMedicamento = ?",
+                "SELECT precio, stock FROM medicamentos WHERE idMedicamento = ?",
                 [idMedicamento]
             );
 
@@ -151,16 +151,14 @@ const registrarVentas = async (req, res) => {
             const precio = medicamento[0].precio;
             const subtotal = item.cantidad * precio;
 
+
             await connection.query(
-                "INSERT INTO detalleVentas (noVenta, idProducto, cantidad, precio, subtotal) VALUES (?, ?, ?, ?, ?)",
-                [
-                    noVenta,
-                    item.idMedicamento,
-                    item.cantidad,
-                    precio,
-                    subtotal
-                ]
+                `INSERT INTO detalleVentas 
+        (noVenta, idProducto, cantidad, precio, subtotal) 
+        VALUES (?, ?, ?, ?, ?)`,
+                [noVenta, item.idMedicamento, item.cantidad, precio, subtotal]
             );
+
 
             const [updateStock] = await connection.query(
                 "UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ? AND stock >= ?",
@@ -258,19 +256,32 @@ const anularVenta = async (req, res) => {
             });
         }
 
-        const [detalles] = await connection.query("SELECT idProducto, cantidad FROM detalleVentas WHERE noVenta = ?",
+        const [detalles] = await connection.query("SELECT idProducto, cantidad, cantidadAnulada FROM detalleVentas WHERE noVenta = ?",
             [id]);
 
-        for (const detalle of detalles) {
-            await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
-                [detalle.cantidad, detalle.idProducto]);
+
+        // Devolver SOLO lo que no estaba anulado
+        for (const d of detalles) {
+            const pendiente = d.cantidad - d.cantidadAnulada;
+
+            if (pendiente > 0) {
+                await connection.query(
+                    "UPDATE medicamentos SET stock = stock + ? WHERE idMedicamento = ?",
+                    [pendiente, d.idProducto]
+                );
+            }
         }
 
-        await connection.query("UPDATE ventas SET estadoVenta = 'Anulada' WHERE noVenta = ?",
-            [id]);
+        // Marcar todo como anulado
+        await connection.query(
+            "UPDATE detalleVentas SET cantidadAnulada = cantidad WHERE noVenta = ?",
+            [id]
+        );
 
-        await connection.query("UPDATE detalleVentas SET anulado = 1 WHERE noVenta = ?",
-            [id]);
+        await connection.query(
+            "UPDATE ventas SET estadoVenta = 'Anulada', totalVenta = 0 WHERE noVenta = ?",
+            [id]
+        );
 
         await connection.commit();
 
@@ -290,23 +301,25 @@ const anularVenta = async (req, res) => {
     }
 }
 
-// Funcion anular producto de una venta
+
+
+
+// Funcion anular uno o mas productos de una venta
 const anularProductoVenta = async (req, res) => {
-    const { idDetalle } = req.params;
     const idUsuario = req.usuario.idUsuario;
+    const { idDetalle } = req.params;
     const { cantidadAnular } = req.body;
 
     const connection = await pool.getConnection();
 
     try {
-
         await connection.beginTransaction();
 
         // 1. Obtener detalle
         const [detalle] = await connection.query(
-            `SELECT noVenta, idProducto, cantidad, precio, subtotal, anulado
+            `SELECT noVenta, idProducto, cantidad, cantidadAnulada
              FROM detalleVentas
-             WHERE idDetalle = ?`,
+             WHERE idDetalle = ? FOR UPDATE`,
             [idDetalle]
         );
 
@@ -314,70 +327,75 @@ const anularProductoVenta = async (req, res) => {
             throw new Error("El detalle de venta no existe");
         }
 
-        if (detalle[0].anulado === 1) {
-            throw new Error("Este producto ya fue anulado");
+        const { noVenta, idProducto, cantidad, cantidadAnulada } = detalle[0];
+
+        // 2. Validar cantidad disponible
+        const disponible = cantidad - cantidadAnulada;
+
+        if (!Number.isInteger(cantidadAnular) || cantidadAnular <= 0) {
+            throw new Error("Cantidad inválida");
         }
 
-        const { noVenta, idProducto, cantidad, precio } = detalle[0];
-
-        if (cantidadAnular > cantidad) {
-            throw new Error("Cantidad a anular mayor que la vendida");
+        if (cantidadAnular > disponible) {
+            throw new Error("No puedes anular más de lo disponible");
         }
 
-        const nuevaCantidad = cantidad - cantidadAnular;
-
-        if (nuevaCantidad === 0) {
-            // 2. Marcar detalle como anulado
-            await connection.query(
-                "UPDATE detalleVentas SET anulado = 1 WHERE idDetalle = ?",
-                [idDetalle]
-            );
-        } else {
-            const nuevoSubtotal = precio * nuevaCantidad;
-
-
-            await connection.query(
-                "Update detalleVentas SET cantidad = ?, subtotal = ? WHERE idDetalle = ?",
-                [nuevaCantidad, nuevoSubtotal, idDetalle]
-            );
-        }
-
-        // 3. Devolver stock
+        // 3. Actualizar cantidadAnulada
         await connection.query(
-            "UPDATE medicamentos SET stock = stock + ? WHERE idMedicamento = ?",
+            `UPDATE detalleVentas 
+             SET cantidadAnulada = cantidadAnulada + ?
+             WHERE idDetalle = ?`,
+            [cantidadAnular, idDetalle]
+        );
+
+        // 4. Devolver stock
+        await connection.query(
+            `UPDATE medicamentos 
+             SET stock = stock + ?
+             WHERE idMedicamento = ?`,
             [cantidadAnular, idProducto]
         );
 
-        // 4. Recalcular total de la venta
-        const [total] = await connection.query(
-            `SELECT SUM(subtotal) AS total
+        // 5. Calcular estado de la venta
+        const [estadoData] = await connection.query(
+            `SELECT 
+                SUM(cantidad) AS total,
+                SUM(cantidadAnulada) AS anulados
              FROM detalleVentas
-             WHERE noVenta = ? AND anulado = 0`,
+             WHERE noVenta = ?`,
             [noVenta]
         );
 
-        const nuevoTotal = total[0].total || 0;
+        let nuevoEstado = "Completada";
 
-        // 5. Actualizar total de la venta
+        if (estadoData[0].anulados === estadoData[0].total) {
+            nuevoEstado = "Anulada";
+        } else if (estadoData[0].anulados > 0) {
+            nuevoEstado = "Parcialmente Anulada";
+        }
+
+        // 6. Actualizar estado en ventas
         await connection.query(
-            "UPDATE ventas SET totalVenta = ? WHERE noVenta = ?",
-            [nuevoTotal, noVenta]
+            "UPDATE ventas SET estadoVenta = ? WHERE noVenta = ?",
+            [nuevoEstado, noVenta]
         );
 
         await connection.commit();
 
-        const mensaje = nuevaCantidad === 0
+        // 7. Mensaje
+        const restante = cantidad - (cantidadAnulada + cantidadAnular);
+
+        const mensaje = restante === 0
             ? "Producto anulado completamente"
             : "Producto anulado parcialmente";
 
         res.json({
             mensaje,
             noVenta,
-            nuevoTotal
+            estado: nuevoEstado
         });
 
     } catch (error) {
-
         await connection.rollback();
 
         res.status(400).json({
@@ -389,6 +407,9 @@ const anularProductoVenta = async (req, res) => {
         connection.release();
     }
 };
+
+
+
 
 //Funcion mostrar total ventas del dia
 const obtenerTotalVentasDelDia = async (req, res) => {
@@ -492,7 +513,7 @@ const generarPDFVenta = async (req, res) => {
             .text(fechaFormateada);
 
         doc.moveDown();
-        
+
         // 🔹 Línea separadora
         doc.moveTo(50, doc.y)
             .lineTo(550, doc.y)
