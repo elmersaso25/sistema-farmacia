@@ -4,7 +4,7 @@ const pool = require("../db");
 
 const obtenerVentas = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT v.noVenta, v.noFactura, v.fechaVenta, c.nombreCompleto, v.totalVenta, v.estadoVenta FROM ventas v INNER JOIN clientes c ON v.idCliente = c.idCliente ORDER BY v.noVenta DESC;");
+        const [rows] = await pool.query("SELECT v.noVenta, v.noFactura, v.fechaVenta, c.nombreCompleto, v.totalVenta, COALESCE(SUM((d.cantidad - d.cantidadAnulada) * d.precio), 0) AS totalActual,          COALESCE(SUM(d.cantidadAnulada * d.precio), 0) AS totalAnulado,v.estadoVenta FROM ventas v INNER JOIN clientes c ON v.idCliente = c.idCliente LEFT JOIN detalleVentas d ON v.noVenta = d.noVenta GROUP BY v.noVenta ORDER BY v.noVenta DESC; ");
         res.status(200).json(rows)
 
     } catch (error) {
@@ -13,8 +13,7 @@ const obtenerVentas = async (req, res) => {
 
     }
 }
-
-
+///PENDIENTE LO DE OBTENER DETALLES 
 const obtenerDetallesVenta = async (req, res) => {
     const { id } = req.params;
 
@@ -22,9 +21,12 @@ const obtenerDetallesVenta = async (req, res) => {
         const [rows] = await pool.query(
             `SELECT d.idDetalle,
                     CONCAT(p.nombreMedicamento,' ',p.descripcion) AS nombreProducto,
-                    d.cantidad,
+                    cantidad AS vendida,
+                    cantidadAnulada AS anulado,
+                    (d.cantidad - d.cantidadAnulada) AS final,
                     d.precio,
-                    d.subtotal
+                    d.subtotal,
+                    (d.precio * (d.cantidad - d.cantidadAnulada)) AS subtotalFinal
              FROM detalleVentas d
              INNER JOIN medicamentos p 
                 ON d.idProducto = p.idMedicamento
@@ -279,7 +281,7 @@ const anularVenta = async (req, res) => {
         );
 
         await connection.query(
-            "UPDATE ventas SET estadoVenta = 'Anulada', totalVenta = 0 WHERE noVenta = ?",
+            "UPDATE ventas SET estadoVenta = 'Anulada' WHERE noVenta = ?",
             [id]
         );
 
