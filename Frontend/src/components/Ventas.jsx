@@ -146,7 +146,7 @@ function Ventas() {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                     body: JSON.stringify({
-                            cantidadAnular: Number(cantidadAnular)
+                        cantidadAnular: Number(cantidadAnular)
                     })
                 }
             );
@@ -182,17 +182,21 @@ function Ventas() {
 
     //Tabla para mostrar las ventas
     const columns = [
-        { name: "No.", selector: (row) => row.noVenta, sortable: true, width: "100px", wrap: false },
+        { name: "No.", selector: (row) => row.noVenta, sortable: true, width: "90px", wrap: false },
 
-        { name: "Factura", selector: (row) => row.noFactura, sortable: true, width: "150px", wrap: false },
+        { name: "Factura", selector: (row) => row.noFactura, sortable: true, width: "130px", wrap: false },
 
-        { name: "Fecha", selector: (row) => formatearFecha(row.fechaVenta), sortable: true, width: "150px", wrap: false },
+        { name: "Fecha", selector: (row) => formatearFecha(row.fechaVenta), sortable: true, width: "120px", wrap: false },
 
-        { name: "Cliente", selector: (row) => row.nombreCompleto, sortable: true, width: "250px", wrap: false },
+        { name: "Cliente", selector: (row) => row.nombreCompleto, sortable: true, width: "220px", wrap: false },
 
-        { name: "Total", selector: (row) => `Q${Number(row.totalVenta).toFixed(2)}`, sortable: true, width: "150px", wrap: false },
+        { name: "Total", selector: (row) => `Q${Number(row.totalVenta).toFixed(2)}`, sortable: true, width: "110px", wrap: false },
 
-        { name: "Estado", selector: (row) => row.estadoVenta, sortable: true, width: "200px", wrap: false },
+        { name: "Anulado", selector: (row) => `Q${Number(row.totalAnulado).toFixed(2)}`, sortable: true, width: "110px", wrap: false },
+
+        { name: "Actual", selector: (row) => `Q${Number(row.totalActual).toFixed(2)}`, sortable: true, width: "110px", wrap: false },
+
+        { name: "Estado", selector: (row) => row.estadoVenta, sortable: true, width: "180px", wrap: false },
 
 
         {
@@ -328,9 +332,15 @@ function Ventas() {
     };
 
 
-    const totalDetalles = detallesVenta.reduce((acc, item) => {
-        return acc + Number(item.subtotal);
-    }, 0);
+    const totalOriginal = detallesVenta.reduce(
+        (acc, detalle) => acc + Number(detalle.subtotal),
+        0
+    );
+
+    const totalActual = detallesVenta.reduce(
+        (acc, detalle) => acc + Number(detalle.subtotalFinal),
+        0
+    );
 
     const ventaAnulada = ventaSeleccionada?.estadoVenta === "Anulada";
 
@@ -380,6 +390,7 @@ function Ventas() {
                 title="Detalles de la Compra"
                 size="md"
                 titleSize="18px"
+                style={{ maxWidth: "850px" }}
             >
                 {detallesVenta.length === 0 ? (
                     <p>No hay detalles para esta compra</p>
@@ -388,9 +399,12 @@ function Ventas() {
                         <thead>
                             <tr>
                                 <th>Producto</th>
-                                <th>Cantidad</th>
+                                <th>Vendido</th>
+                                <th>Anulado</th>
+                                <th>Actual</th>
                                 <th>Precio</th>
-                                <th>Subtotal</th>
+                                <th>Total original</th>
+                                <th>Total actual</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -398,11 +412,12 @@ function Ventas() {
 
                                 <tr key={detalle.idDetalle}>
                                     <td>{detalle.nombreProducto}</td>
-                                    <td>{detalle.cantidad}</td>
+                                    <td>{detalle.vendida}</td>
+                                    <td>{detalle.anulado}</td>
+                                    <td>{detalle.final}</td>
                                     <td>Q{detalle.precio}</td>
                                     <td>Q{detalle.subtotal}</td>
-
-
+                                    <td>Q{detalle.subtotalFinal}</td>
                                     <td>
                                         <button
                                             className="btn btn-danger btn-sm"
@@ -425,11 +440,19 @@ function Ventas() {
                                 </tr>
                             ))}
                             <tr>
-                                <td colSpan="3" style={{ textAlign: "right", fontWeight: "bold" }}>
-                                    Total:
+                                <td colSpan="6" style={{ textAlign: "right", fontWeight: "bold" }}>
+                                    Total Original:
                                 </td>
                                 <td style={{ fontWeight: "bold" }}>
-                                    Q{totalDetalles.toFixed(2)}
+                                    Q{totalOriginal.toFixed(2)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colSpan="6" style={{ textAlign: "right", fontWeight: "bold" }}>
+                                    Total Actual:
+                                </td>
+                                <td style={{ fontWeight: "bold" }}>
+                                    Q{totalActual.toFixed(2)}
                                 </td>
                             </tr>
                         </tbody>
