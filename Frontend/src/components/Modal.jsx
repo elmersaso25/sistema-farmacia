@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Modal.css";
 
-const Modal = ({ isOpen, onClose, title, children, size, titleSize }) => {
+const Modal = ({ isOpen, onClose, title, children, size, titleSize, style }) => {
   const [show, setShow] = useState(isOpen);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const Modal = ({ isOpen, onClose, title, children, size, titleSize }) => {
 
   return (
     <div className={`modal-overlay ${show ? "fade-in" : "fade-out"}`}>
-      <div className={`modal-container ${size} ${show ? "zoom-in" : "zoom-out"}`}>
+      <div className={`modal-container ${size} ${show ? "zoom-in" : "zoom-out"}`} style={style}>
         <div className="modal-header">
           <p style={{ fontSize: titleSize }}>{title}</p>
           
