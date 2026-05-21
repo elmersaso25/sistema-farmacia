@@ -304,8 +304,6 @@ const anularVenta = async (req, res) => {
 }
 
 
-
-
 // Funcion anular uno o mas productos de una venta
 const anularProductoVenta = async (req, res) => {
     const idUsuario = req.usuario.idUsuario;
@@ -416,7 +414,7 @@ const anularProductoVenta = async (req, res) => {
 //Funcion mostrar total ventas del dia
 const obtenerTotalVentasDelDia = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasDelDia FROM ventas WHERE fechaVenta >= CURDATE() AND fechaVenta < CURDATE() + INTERVAL 1 DAY AND estadoVenta ='Completada'");
+        const [rows] = await pool.query(" SELECT IFNULL(SUM(dv.precio * (dv.cantidad - dv.cantidadAnulada)),0) AS ventasDelDia FROM ventas v JOIN detalleVentas dv ON v.noVenta = dv.noVenta WHERE fechaVenta >= CURDATE() AND fechaVenta < CURDATE() + INTERVAL 1 DAY AND estadoVenta <>'Anulada'");
         res.json({
             totalVentasDelDia: rows[0].ventasDelDia
         })
@@ -429,7 +427,7 @@ const obtenerTotalVentasDelDia = async (req, res) => {
 //Funcion mostrar total todas las ventas 
 const obtenerTotalVentas = async (req, res) => {
     try {
-        const [rows] = await pool.query(" SELECT IFNULL( SUM(totalVenta), 0.00) AS ventasTotales FROM ventas WHERE estadoVenta ='Completada'");
+        const [rows] = await pool.query(" SELECT IFNULL( SUM(dv.precio * (dv.cantidad - dv.cantidadAnulada)), 0.00) AS ventasTotales FROM ventas v JOIN detalleVentas dv ON v.noVenta = dv.noVenta WHERE estadoVenta <> 'Anulada'");
         res.json({
             totalVentas: rows[0].ventasTotales
         })
