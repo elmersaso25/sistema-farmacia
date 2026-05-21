@@ -299,7 +299,7 @@ function RegistrarVentas() {
           }
 
           // Mantener en el módulo de Compras
-          navigate("/registrarVentas");
+          window.location.reload();
         });
 
       } else {
