@@ -4,7 +4,7 @@ const pool = require("../db");
 
 const obtenerVentas = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT v.noVenta, v.noFactura, v.fechaVenta, c.nombreCompleto, v.totalVenta, COALESCE(SUM((d.cantidad - d.cantidadAnulada) * d.precio), 0) AS totalActual,          COALESCE(SUM(d.cantidadAnulada * d.precio), 0) AS totalAnulado,v.estadoVenta FROM ventas v INNER JOIN clientes c ON v.idCliente = c.idCliente LEFT JOIN detalleVentas d ON v.noVenta = d.noVenta GROUP BY v.noVenta ORDER BY v.noVenta DESC; ");
+        const [rows] = await pool.query("SELECT v.noVenta,v.noFactura,v.fechaVenta,c.nombreCompleto,v.totalVenta,COALESCE(SUM((d.cantidad - d.cantidadAnulada) * d.precio), 0) AS totalActual,COALESCE(SUM(d.cantidadAnulada * d.precio), 0) AS totalAnulado,v.estadoVenta FROM ventas v INNER JOIN clientes c ON v.idCliente = c.idCliente LEFT JOIN detalleVentas d ON v.noVenta = d.noVenta GROUP BY v.noVenta,v.noFactura, v.fechaVenta,c.nombreCompleto,v.totalVenta,v.estadoVenta ORDER BY v.noVenta DESC; ");
         res.status(200).json(rows)
 
     } catch (error) {
