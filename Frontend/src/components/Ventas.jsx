@@ -164,9 +164,9 @@ function Ventas() {
 
             setMostrarModalAnular(false);
             setCantidadAnular("");
+            setMostrarModal(false);
 
-            // Recargar detalles
-            verDetalles(ventaSeleccionada.noVenta, ventaSeleccionada);
+            await obtenerVentas();
 
         } catch (error) {
             Swal.fire({
