@@ -131,7 +131,6 @@ function RegistrarCompras() {
   };
 
 
-
   //Funcion para mostrar segundo modal
   const agregarDetallesProducto = (producto) => {
     setProductoSeleccionado(producto);
@@ -202,20 +201,17 @@ function RegistrarCompras() {
   }, [detalles]);
 
 
-
-  //Enviar compra al backend
+  // Enviar compra al backend
   const realizarCompra = async () => {
     const token = localStorage.getItem("token");
 
     if (!idProveedor) {
       Swal.fire("Error", "Seleccione un proveedor", "error");
-      console.log("Falta Proveedor");
       return;
     }
 
     if (detalles.length === 0) {
       Swal.fire("Error", "Debe agregar al menos un producto", "error");
-      console.log("Falta detalles de compra");
       return;
     }
 
@@ -241,59 +237,7 @@ function RegistrarCompras() {
 
       const data = await resp.json();
 
-      if (resp.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Compra registrada correctamente",
-          text: "¿Desea descargar el comprobante?",
-          showCancelButton: true,
-          confirmButtonText: "Sí, descargar",
-          cancelButtonText: "No"
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              const resPDF = await fetch(`${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
-              });
-
-              if (!resPDF.ok) throw new Error("Error al descargar PDF");
-
-              const blob = await resPDF.blob();
-              const url = window.URL.createObjectURL(blob);
-
-              // Forzar descarga
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `ComprobanteCompra_${data.noCompra}.pdf`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              window.URL.revokeObjectURL(url);
-
-              console.log("PDF descargado correctamente");
-
-            } catch (error) {
-              console.error("Error al descargar PDF:", error);
-              Swal.fire("Error", "No se pudo descargar el PDF", "error");
-            }
-          }
-
-          // Mantener en el módulo de Compras
-          navigate("/registrarCompras");
-          setCarrito([]);
-          setDetalles([]);        // si usas detalles
-          setTotal(0);
-          setIdProveedor("");
-          setObservaciones("");
-          setNoFactura("");
-
-          // Limpiar localStorage si usas carrito ahí
-          localStorage.removeItem("carrito");
-        });
-
-      } else {
+      if (!resp.ok) {
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -306,238 +250,300 @@ function RegistrarCompras() {
             navigate("/");
           }, 2000);
         }
+        return;
       }
 
-    } catch (error) {
-      console.error(error);
-      Swal.fire("Error", "No se pudo conectar al servidor", "error");
-    }
-  };
+      // 🔥 Limpiar SIEMPRE primero (estado + memoria)
+      // 🔥 Limpiar formulario y recargar datos
+      const limpiarEstado = async () => {
+        setDetalles([]);
+        setIdProveedor("");
+        setObservaciones("");
+        setBusqueda("");
+        setProductos([]);
+
+        setCantidad("");
+        setPrecio("");
+        setLote("");
+        setFechaVencimiento("");
+
+        localStorage.removeItem("carrito");
+      }
+
+        // ✔ Mensaje de éxito con opción de PDF
+        Swal.fire({
+          icon: "success",
+          title: "Compra registrada correctamente",
+          text: "¿Desea descargar el comprobante?",
+          showCancelButton: true,
+          confirmButtonText: "Sí, descargar",
+          cancelButtonText: "No"
+        }).then(async (result) => {
+
+          if (result.isConfirmed) {
+            try {
+              const resPDF = await fetch(
+                `${import.meta.env.VITE_API_URL}/compras/${data.noCompra}/pdf`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
+                }
+              );
+
+              if (!resPDF.ok) throw new Error("Error al descargar PDF");
+
+              const blob = await resPDF.blob();
+              const url = window.URL.createObjectURL(blob);
+
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `ComprobanteCompra_${data.noCompra}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+
+              window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+              console.error(error);
+              Swal.fire("Error", "No se pudo descargar el PDF", "error");
+            }
+          }
+
+          // 🔥 SIEMPRE limpiar y luego navegar
+          limpiarEstado();
+          navigate("/registrarCompras");
+        });
+
+      } catch (error) {
+        console.error(error);
+        Swal.fire("Error", "No se pudo conectar al servidor", "error");
+      }
+    };
 
 
+    return (
+      <div className="container-custom">
+        <div className="form-altura">
+          {/* TU BLOQUE ORIGINAL */}
+          <div className="border rounded p-4 bg-light">
+            <div className="row g-2 align-items-end">
+              <div className="col-md-2">
+                <label className="form-label">No. Compra</label>
+                <input type="text" className="form-control border" value={noCompra} readOnly />
+              </div>
 
+              <div className="col-md-3">
+                <label className="form-label">No. Comprobante</label>
+                <input type="text" className="form-control border" value={noFactura} readOnly />
+              </div>
 
-  return (
-    <div className="container-custom">
-      <div className="form-altura">
-        {/* TU BLOQUE ORIGINAL */}
-        <div className="border rounded p-4 bg-light">
-          <div className="row g-2 align-items-end">
-            <div className="col-md-2">
-              <label className="form-label">No. Compra</label>
-              <input type="text" className="form-control border" value={noCompra} readOnly />
-            </div>
+              <div className="col-md-3">
+                <label className="form-label">Fecha</label>
+                <input type="text" className="form-control border" value={formatearFecha(fechaCompra)} readOnly />
+              </div>
 
-            <div className="col-md-3">
-              <label className="form-label">No. Comprobante</label>
-              <input type="text" className="form-control border" value={noFactura} readOnly />
-            </div>
+              <div className="col-md-4">
+                <label className="form-label">Proveedor</label>
+                <select value={idProveedor} className="form-select border" onChange={e => setIdProveedor(e.target.value)}>
+                  <option value="" disabled>Seleccione un proveedor</option>
+                  {proveedores.map(prov => (
+                    <option key={prov.idProveedor} value={prov.idProveedor}>
+                      {prov.nombreProveedor}
+                    </option>
+                  ))}
+                </select>
 
-            <div className="col-md-3">
-              <label className="form-label">Fecha</label>
-              <input type="text" className="form-control border" value={formatearFecha(fechaCompra)} readOnly />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label">Proveedor</label>
-              <select value={idProveedor} className="form-select border" onChange={e => setIdProveedor(e.target.value)}>
-                <option value="" disabled>Seleccione un proveedor</option>
-                {proveedores.map(prov => (
-                  <option key={prov.idProveedor} value={prov.idProveedor}>
-                    {prov.nombreProveedor}
-                  </option>
-                ))}
-              </select>
-
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* TUS BOTONES */}
-      <div className="p-4 d-flex align-items-end">
+        {/* TUS BOTONES */}
+        <div className="p-4 d-flex align-items-end">
 
-        <button
-          className="btn btn-danger me-2"
-          onClick={() => navigate("/compras")}
+          <button
+            className="btn btn-danger me-2"
+            onClick={() => navigate("/compras")}
+          >
+            Regresar
+          </button>
+
+          <button
+            className="btn btn-primary me-2"
+            onClick={() => setOpenModal(true)}
+          >
+            Agregar
+          </button>
+
+          <button
+            className="btn btn-success me-3"
+            onClick={realizarCompra}
+          >
+            Realizar Compra
+          </button>
+
+          {/* Observaciones */}
+          <div style={{ width: "450px" }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Observaciones de compra (opcional)"
+              value={observaciones}
+              onChange={(e) => setObservaciones(e.target.value)}
+            />
+          </div>
+
+        </div>
+
+
+        {/* TU TABLA, PERO YA PARA DETALLES */}
+        <div className="border rounded p-5 bg-light">
+          <DataTable
+            columns={columns}
+            data={detalles}
+            pagination
+            highlightOnHover
+            pointerOnHover
+            customStyles={customStyles}
+            noDataComponent="No hay productos agregados"
+          />
+
+          <div className="d-flex justify-content-end mt-3">
+            <h5>Total: Q {total.toFixed(2)}</h5>
+          </div>
+        </div>
+
+        <Modal
+          isOpen={openModal}
+          onClose={() => setOpenModal(false)}
+          title="Agregar Productos a la Compra"
+          size="md"
+          titleSize="22px">
+          <div className="container">
+            <div className="row">
+              <div className="col-12">
+                <label htmlFor="">Producto</label>
+                <input type="text" className="form-control" placeholder="Buscar por código o nombre Producto" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+              </div>
+            </div>
+            {/* TABLA DE RESULTADOS */}
+            <div className="row">
+              <div className="col-12">
+                <table className="table table-sm table-hover">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Código</th>
+                      <th>Producto</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productos.map((p) => (
+                      <tr key={p.codigoMedicamento}>
+                        <td>{p.codigoMedicamento}</td>
+                        <td>{p.medicamento}</td>
+
+                        <td>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => agregarDetallesProducto(p)}
+                          >
+                            Agregar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {productos.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="text-center text-muted">
+                          No hay resultados
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={openMiniModal}
+          onClose={() => setOpenMiniModal(false)}
+          title="Detalles del producto"
+          size="sm"
+          titleSize="20px"
         >
-          Regresar
-        </button>
+          {/* Cantidad */}
+          <input
+            type="number"
+            className={`form-control mb-1 ${erroresMini.cantidad ? "is-invalid" : ""}`}
+            placeholder="Cantidad"
+            value={cantidad}
+            onChange={(e) => {
+              setCantidad(e.target.value);
+              setErroresMini(prev => ({ ...prev, cantidad: undefined }));
+            }}
+          />
+          {erroresMini.cantidad && <div className="text-danger small">{erroresMini.cantidad}</div>}
 
-        <button
-          className="btn btn-primary me-2"
-          onClick={() => setOpenModal(true)}
-        >
-          Agregar
-        </button>
+          {/* Precio */}
+          <input
+            type="number"
+            className={`form-control mb-1 ${erroresMini.precio ? "is-invalid" : ""}`}
+            placeholder="Precio Unitario"
+            value={precio}
+            onChange={(e) => {
+              setPrecio(e.target.value);
+              setErroresMini(prev => ({ ...prev, precio: undefined }));
+            }}
+          />
+          {erroresMini.precio && <div className="text-danger small">{erroresMini.precio}</div>}
 
-        <button
-          className="btn btn-success me-3"
-          onClick={realizarCompra}
-        >
-          Realizar Compra
-        </button>
-
-        {/* Observaciones */}
-        <div style={{ width: "450px" }}>
+          {/* Lote */}
           <input
             type="text"
-            className="form-control"
-            placeholder="Observaciones de compra (opcional)"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
+            className={`form-control mb-1 ${erroresMini.lote ? "is-invalid" : ""}`}
+            placeholder="Lote"
+            value={lote}
+            onChange={(e) => {
+              setLote(e.target.value);
+              setErroresMini(prev => ({ ...prev, lote: undefined }));
+            }}
           />
-        </div>
+          {erroresMini.lote && <div className="text-danger small">{erroresMini.lote}</div>}
 
-      </div>
+          {/* Fecha de vencimiento */}
+          <label>Fecha vencimiento</label>
+          <input
+            type="date"
+            className={`form-control mb-2 ${erroresMini.fechaVencimiento ? "is-invalid" : ""}`}
+            value={fechaVencimiento}
+            onChange={(e) => {
+              setFechaVencimiento(e.target.value);
+              setErroresMini(prev => ({ ...prev, fechaVencimiento: undefined }));
+            }}
+          />
+          {erroresMini.fechaVencimiento && (
+            <div className="text-danger small">{erroresMini.fechaVencimiento}</div>
+          )}
 
-
-      {/* TU TABLA, PERO YA PARA DETALLES */}
-      <div className="border rounded p-5 bg-light">
-        <DataTable
-          columns={columns}
-          data={detalles}
-          pagination
-          highlightOnHover
-          pointerOnHover
-          customStyles={customStyles}
-          noDataComponent="No hay productos agregados"
-        />
-
-        <div className="d-flex justify-content-end mt-3">
-          <h5>Total: Q {total.toFixed(2)}</h5>
-        </div>
-      </div>
-
-      <Modal
-        isOpen={openModal}
-        onClose={() => setOpenModal(false)}
-        title="Agregar Productos a la Compra"
-        size="md"
-        titleSize="22px">
-        <div className="container">
-          <div className="row">
-            <div className="col-12">
-              <label htmlFor="">Producto</label>
-              <input type="text" className="form-control" placeholder="Buscar por código o nombre Producto" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-            </div>
+          {/* Botón Guardar */}
+          <div className="text-end mt-2">
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={guardarProductoMemoria}
+            >
+              Guardar
+            </button>
           </div>
-          {/* TABLA DE RESULTADOS */}
-          <div className="row">
-            <div className="col-12">
-              <table className="table table-sm table-hover">
-                <thead className="table-light">
-                  <tr>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productos.map((p) => (
-                    <tr key={p.codigoMedicamento}>
-                      <td>{p.codigoMedicamento}</td>
-                      <td>{p.medicamento}</td>
+        </Modal>
+      </div>
+    );
+  }
 
-                      <td>
-                        <button
-                          className="btn btn-sm btn-primary"
-                          onClick={() => agregarDetallesProducto(p)}
-                        >
-                          Agregar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {productos.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="text-center text-muted">
-                        No hay resultados
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={openMiniModal}
-        onClose={() => setOpenMiniModal(false)}
-        title="Detalles del producto"
-        size="sm"
-        titleSize="20px"
-      >
-        {/* Cantidad */}
-        <input
-          type="number"
-          className={`form-control mb-1 ${erroresMini.cantidad ? "is-invalid" : ""}`}
-          placeholder="Cantidad"
-          value={cantidad}
-          onChange={(e) => {
-            setCantidad(e.target.value);
-            setErroresMini(prev => ({ ...prev, cantidad: undefined }));
-          }}
-        />
-        {erroresMini.cantidad && <div className="text-danger small">{erroresMini.cantidad}</div>}
-
-        {/* Precio */}
-        <input
-          type="number"
-          className={`form-control mb-1 ${erroresMini.precio ? "is-invalid" : ""}`}
-          placeholder="Precio Unitario"
-          value={precio}
-          onChange={(e) => {
-            setPrecio(e.target.value);
-            setErroresMini(prev => ({ ...prev, precio: undefined }));
-          }}
-        />
-        {erroresMini.precio && <div className="text-danger small">{erroresMini.precio}</div>}
-
-        {/* Lote */}
-        <input
-          type="text"
-          className={`form-control mb-1 ${erroresMini.lote ? "is-invalid" : ""}`}
-          placeholder="Lote"
-          value={lote}
-          onChange={(e) => {
-            setLote(e.target.value);
-            setErroresMini(prev => ({ ...prev, lote: undefined }));
-          }}
-        />
-        {erroresMini.lote && <div className="text-danger small">{erroresMini.lote}</div>}
-
-        {/* Fecha de vencimiento */}
-        <label>Fecha vencimiento</label>
-        <input
-          type="date"
-          className={`form-control mb-2 ${erroresMini.fechaVencimiento ? "is-invalid" : ""}`}
-          value={fechaVencimiento}
-          onChange={(e) => {
-            setFechaVencimiento(e.target.value);
-            setErroresMini(prev => ({ ...prev, fechaVencimiento: undefined }));
-          }}
-        />
-        {erroresMini.fechaVencimiento && (
-          <div className="text-danger small">{erroresMini.fechaVencimiento}</div>
-        )}
-
-        {/* Botón Guardar */}
-        <div className="text-end mt-2">
-          <button
-            type="button"
-            className="btn btn-success btn-sm"
-            onClick={guardarProductoMemoria}
-          >
-            Guardar
-          </button>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-export default RegistrarCompras;
+  export default RegistrarCompras;
