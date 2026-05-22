@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -11,9 +11,9 @@ function RegistrarMedicamentos() {
         precio: "",
         categoria: ""
     });
-
+    const [categorias, setCategorias] = useState([]);
     const [errores, setErrores] = useState({});
-    
+
 
     const handleChange = (e) => {
         setFormData({
@@ -26,71 +26,79 @@ function RegistrarMedicamentos() {
         e.preventDefault();
         setErrores({});
 
-        try{
+        try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/registrar`, {
                 method: "POST",
-                headers: {"Content-Type": "Application/json"},
+                headers: { "Content-Type": "Application/json" },
                 body: JSON.stringify(formData),
             });
             const data = await res.json();
 
-             if (res.ok) {
-                  setErrores({});
-                  Swal.fire({
+            if (res.ok) {
+                setErrores({});
+                Swal.fire({
                     icon: "success",
                     title: "Registro exitoso",
                     text: "El medicamento fue registrado correctamente.",
                     showConfirmButton: false,
                     timer: 2000,
 
-                  }).then(() =>{
+                }).then(() => {
                     navigate("/medicamentos");
-                  });
+                });
 
-                  setFormData({
+                setFormData({
                     nombreMedicamento: "",
                     descripcion: "",
                     precio: "",
                     categoria: "",
-                  });
-                } 
-
-                // 🔹 Si el backend devuelve varios errores
-                    else if (data.errores) {
-                      if (data.errores.general) {
-                        Swal.fire({
-                          icon: "warning",
-                          title: "Upss... Algo salió mal",
-                          text: data.errores.general,
-                          confirmButtonText: "Entendido",
-                        });
-                      }
-                
-                      // Muestra errores específicos bajo los inputs
-                      setErrores({
-                        precio: data.errores.precio || ""
-                      });
-                    } 
-                    // 🔹 Si el backend solo devuelve un mensaje simple (sin objeto "errores")
-                    else {
-                      if (data.mensaje?.toLowerCase().includes("precio")) {
-                        setErrores({ precio: data.mensaje });
-                     
-                      } else {
-                        Swal.fire("Error", data.mensaje || "No se pudo registrar", "error");
-                      }
-                    }
-
-        }catch(error){
-            Swal.fire({
-                  icon: "error",
-                  title: "Error de conexión",
-                  text: "No se pudo conectar con el servidor.",
-                  confirmButtonText: "Aceptar",
                 });
-                console.error(error);
+            }
+
+            // 🔹 Si el backend devuelve varios errores
+            else if (data.errores) {
+                if (data.errores.general) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Upss... Algo salió mal",
+                        text: data.errores.general,
+                        confirmButtonText: "Entendido",
+                    });
+                }
+
+                // Muestra errores específicos bajo los inputs
+                setErrores({
+                    precio: data.errores.precio || ""
+                });
+            }
+            // 🔹 Si el backend solo devuelve un mensaje simple (sin objeto "errores")
+            else {
+                if (data.mensaje?.toLowerCase().includes("precio")) {
+                    setErrores({ precio: data.mensaje });
+
+                } else {
+                    Swal.fire("Error", data.mensaje || "No se pudo registrar", "error");
+                }
+            }
+
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error de conexión",
+                text: "No se pudo conectar con el servidor.",
+                confirmButtonText: "Aceptar",
+            });
+            console.error(error);
         }
     }
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/medicamentos/categorias`)
+            .then(res => res.json())
+            .then(data => setCategorias(data))
+            .catch(err => console.error(err));
+    }, []);
+
     return (
         <div className="container">
             <div className="p-4">
@@ -126,8 +134,8 @@ function RegistrarMedicamentos() {
                                         value={formData.descripcion}
                                         onChange={handleChange}
                                         className="form-control"
-                                         rows="3"
-                                          style={{ resize: "none" }}
+                                        rows="3"
+                                        style={{ resize: "none" }}
                                         required >
                                     </textarea>
                                 </div>
@@ -155,17 +163,32 @@ function RegistrarMedicamentos() {
                             <div className="row mb-3 align-items-center">
                                 <label className="col-sm-4 col-form-label">Categoría</label>
                                 <div className="col-sm-8">
-                                    <input type="text"
-                                        name="categoria"
-                                        value={formData.categoria}
+
+                                    <select
+                                        name="idCategoria"
+                                        value={formData.idCategoria}
                                         onChange={handleChange}
-                                        className="form-control"
+                                        className="form-select"
                                         required
-                                    />
+                                    >
+
+                                        <option value="">
+                                            Seleccione categoría
+                                        </option>
+
+                                        {categorias.map((cat) => (
+                                            <option
+                                                key={cat.idCategoria}
+                                                value={cat.idCategoria}
+                                            >
+                                                {cat.categoria}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
-                             <div className="text-center">
+                            <div className="text-center">
                                 <button className="btn btn-primary">Registrar</button>
                             </div>
 
