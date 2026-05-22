@@ -15,6 +15,7 @@ function RegistrarVentas() {
   const [fechaVenta, setFechaVenta] = useState("");
   const [idCliente, setIdCliente] = useState("");
   const [mostrarModalCliente, setMostrarModalCliente] = useState(true);
+  const [errorNit, setErrorNit] = useState("");
 
   const [openModal, setOpenModal] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -95,46 +96,55 @@ function RegistrarVentas() {
 
 
   const manejarNitEnter = async () => {
-    const valor = nit.trim();
+  const valor = nit.trim();
 
-    if (!valor) return console.log("NIT vacío");
+  if (!valor) {
+    setErrorNit("Es necesario ingresar NIT o CF");
+    console.log("NIT vacío");
+    return;
+  }
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes/nit/${valor}`);
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/clientes/nit/${valor}`
+    );
 
-      if (res.ok) {
-        const data = await res.json();
+    if (res.ok) {
+      const data = await res.json();
 
-        setCliente(data);
-        setNombre(data.nombreCompleto);
-        setDireccion(data.direccion);
-        setNit(data.nit);
+      setCliente(data);
+      setNombre(data.nombreCompleto);
+      setDireccion(data.direccion);
+      setNit(data.nit);
 
-        console.log("Cliente encontrado:", data);
-      }
-      else if (res.status === 404) {
-        console.log("Cliente no encontrado");
+      setErrorNit("");
 
-        setCliente(null);
-        setNombre("");
-        setDireccion("Ciudad");
-
-        setMensajeCliente("Cliente nuevo, ingrese nombre");
-
-        setMostrarModalCliente(true);
-
-        setTimeout(() => {
-          inputNombreRef.current?.focus();
-        }, 100);
-      }
-      else {
-        console.error("Error inesperado:", res.statusText);
-      }
-
-    } catch (error) {
-      console.error("Error al buscar cliente:", error);
+      console.log("Cliente encontrado:", data);
     }
-  };
+    else if (res.status === 404) {
+
+      console.log("Cliente no encontrado");
+
+      setCliente(null);
+      setNombre("");
+      setDireccion("Ciudad");
+
+      setMensajeCliente("Cliente nuevo, ingrese nombre");
+
+      setMostrarModalCliente(true);
+
+      setTimeout(() => {
+        inputNombreRef.current?.focus();
+      }, 100);
+    }
+    else {
+      console.error("Error inesperado:", res.statusText);
+    }
+
+  } catch (error) {
+    console.error("Error al buscar cliente:", error);
+  }
+};
 
 
   useEffect(() => {
@@ -537,13 +547,21 @@ function RegistrarVentas() {
             >
 
               {/* NIT */}
+              {errorNit && (
+                <small className="text-danger d-block mb-1">
+                  {errorNit}
+                </small>
+              )}
               <input
                 type="text"
                 className="form-control mb-2"
                 placeholder="Ingrese NIT o CF"
                 value={nit}
                 autoFocus
-                onChange={(e) => setNit(e.target.value)}
+                onChange={(e) => {
+                  setNit(e.target.value);
+                  setErrorNit("");
+                }}
                 onKeyDown={async (e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -588,10 +606,6 @@ function RegistrarVentas() {
                   onClick={() => setMostrarModalCliente(false)}
                 >
                   Cancelar
-                </button>
-
-                <button type="submit" className="btn btn-success">
-                  Aceptar
                 </button>
               </div>
             </form>
