@@ -3,7 +3,7 @@ const pool = require("../db");
 //Funcion obtener medicamentos
 const obtenerMedicamentos = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT idMedicamento,codigoMedicamento,nombreMedicamento,descripcion,precio,categoria,stock,estado FROM medicamentos");
+        const [rows] = await pool.query("SELECT idMedicamento,m.codigoMedicamento,m.nombreMedicamento,m.descripcion,m.precio,c.categoria,m.stock,m.estado FROM medicamentos m JOIN categorias c ON m.idCategoria = c.idCategoria");
         res.status(200).json(rows)
     } catch (error) {
         console.error("Error al obtener medicamentos", error);
@@ -52,13 +52,12 @@ const buscarMedicamentos = async (req, res) => {
 
 //Funcion registrar medicamentos
 const registrarMedicamentos = async (req, res) => {
-    let { nombreMedicamento, descripcion, precio, categoria } = req.body
+    let { nombreMedicamento, descripcion, precio, idCategoria } = req.body
     const errores = {}
 
     if (nombreMedicamento) nombreMedicamento = nombreMedicamento.trim();
     if (descripcion) descripcion = descripcion.trim();
     if (precio) precio = precio.toString().trim();
-    if (categoria) categoria = categoria.trim();
 
     try {
         let updates = {};
@@ -83,8 +82,8 @@ const registrarMedicamentos = async (req, res) => {
             return res.status(400).json({ errores });
         }
 
-        await pool.query("INSERT INTO medicamentos(nombreMedicamento,descripcion,precio,categoria) VALUES(?,?,?,?)",
-            [nombreMedicamento, descripcion, precio, categoria]);
+        await pool.query("INSERT INTO medicamentos(nombreMedicamento,descripcion,precio,idCategoria) VALUES(?,?,?,?)",
+            [nombreMedicamento, descripcion, precio, idCategoria]);
 
         res.status(201).json({ mensaje: "Medicamento registrado correctamente" });
 
@@ -96,7 +95,7 @@ const registrarMedicamentos = async (req, res) => {
 }
 
 const actualizarMedicamentos = async (req, res) => {
-    let { nombreMedicamento, descripcion, precio, categoria } = req.body;
+    let { nombreMedicamento, descripcion, precio, idCategoria } = req.body;
     const { id } = req.params;
     const errores = {};
 
@@ -113,7 +112,7 @@ const actualizarMedicamentos = async (req, res) => {
         let updates = {};
 
         // VALIDACIÓN GENERAL DE CAMPOS VACÍOS
-        const campos = { nombreMedicamento, descripcion, categoria };
+        const campos = { nombreMedicamento, descripcion, idCategoria };
 
         for (const campo in campos) {
             if (campos[campo] !== undefined) {
@@ -154,7 +153,7 @@ const actualizarMedicamentos = async (req, res) => {
         );
 
         const [updated] = await pool.query(
-            "SELECT idMedicamento, nombreMedicamento, descripcion, precio, categoria FROM medicamentos WHERE idMedicamento = ?",
+            "SELECT idMedicamento, nombreMedicamento, descripcion, precio, idCategoria FROM medicamentos WHERE idMedicamento = ?",
             [id]
         );
 
@@ -229,7 +228,17 @@ const obtenerTotalStockMedicamentos = async (req,res) => {
     }
 }
 
+const obtenerCategorias = async (req,res) => {
+    try {
+        const [rows] = await pool.query("SELECT idCategoria, categoria FROM categorias");
+        res.status(200).json(rows)
+    } catch (error) {
+        console.error("Error al obtener categorias", error);
+        res.status(500).json({ mensaje: "Error al obtener categorias" });
+    }
+}
 
 
 
-module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos, obtenerTotalStockMedicamentos};
+
+module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos, obtenerTotalStockMedicamentos, obtenerCategorias};
