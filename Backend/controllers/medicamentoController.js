@@ -3,7 +3,7 @@ const pool = require("../db");
 //Funcion obtener medicamentos
 const obtenerMedicamentos = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT idMedicamento,m.codigoMedicamento,m.nombreMedicamento,m.descripcion,m.precio,c.categoria,m.stock,m.estado FROM medicamentos m JOIN categorias c ON m.idCategoria = c.idCategoria");
+        const [rows] = await pool.query("SELECT idMedicamento,m.codigoMedicamento,m.nombreMedicamento,m.descripcion,m.porcentajeGanancia,m.precio,c.categoria,m.stock,m.estado FROM medicamentos m JOIN categorias c ON m.idCategoria = c.idCategoria");
         res.status(200).json(rows)
     } catch (error) {
         console.error("Error al obtener medicamentos", error);
@@ -15,7 +15,7 @@ const obtenerMedicamentos = async (req, res) => {
 const obtenerMedicamentosPorId = async (req, res) => {
     const { id } = req.params
     try {
-        const [rows] = await pool.query("SELECT idMedicamento,codigoMedicamento,nombreMedicamento,descripcion,precio,categoria,stock,estado FROM medicamentos WHERE idMedicamento = ?", [id]);
+        const [rows] = await pool.query("SELECT idMedicamento,codigoMedicamento,nombreMedicamento,descripcion,porcentajeGanancia,idCategoria,stock,estado FROM medicamentos m  WHERE idMedicamento = ?", [id]);
         //Si no existe el medicamento
         if (rows.length === 0) {
             return res.status(404).json({ mensaje: "Medicamento no encontrado" });
@@ -52,27 +52,24 @@ const buscarMedicamentos = async (req, res) => {
 
 //Funcion registrar medicamentos
 const registrarMedicamentos = async (req, res) => {
-    let { nombreMedicamento, descripcion, precio, idCategoria } = req.body
+    let { nombreMedicamento, descripcion, ganancia, idCategoria } = req.body
     const errores = {}
 
     if (nombreMedicamento) nombreMedicamento = nombreMedicamento.trim();
     if (descripcion) descripcion = descripcion.trim();
-    if (precio) precio = precio.toString().trim();
+    if (ganancia) ganancia = ganancia.toString().trim();
 
     try {
-        let updates = {};
 
 
-        // VALIDAR SOLO SI PRECIO FUE ENVIADO
-        if (precio !== undefined) {
-            const regexPrecio = /^[0-9]+(\.[0-9]{1,2})?$/;
+        // VALIDAR SOLO SI GANANCIA FUE ENVIADO
+        if (ganancia !== undefined) {
+            const regexGanancia = /^[0-9]+(\.[0-9]{1,2})?$/;
 
-            if (precio === "" || !regexPrecio.test(precio)) {
-                errores.precio = "El precio debe ser un número válido (solo números, máximo 2 decimales).";
-            } else if (Number(precio) <= 0) {
-                errores.precio = "El precio debe ser mayor que 0.";
-            } else {
-                updates.precio = Number(precio);
+            if (ganancia === "" || !regexGanancia.test(ganancia)) {
+                errores.ganancia = "Porcentaje ganancia debe ser un número válido (solo números, máximo 2 decimales).";
+            } else if (Number(ganancia) <= 0) {
+                errores.ganancia = "Porcentaje ganancia debe ser mayor que 0.";
             }
         }
 
@@ -82,8 +79,8 @@ const registrarMedicamentos = async (req, res) => {
             return res.status(400).json({ errores });
         }
 
-        await pool.query("INSERT INTO medicamentos(nombreMedicamento,descripcion,precio,idCategoria) VALUES(?,?,?,?)",
-            [nombreMedicamento, descripcion, precio, idCategoria]);
+        await pool.query("INSERT INTO medicamentos(nombreMedicamento,descripcion,porcentajeGanancia,idCategoria) VALUES(?,?,?,?)",
+            [nombreMedicamento, descripcion, ganancia, idCategoria]);
 
         res.status(201).json({ mensaje: "Medicamento registrado correctamente" });
 
@@ -95,7 +92,7 @@ const registrarMedicamentos = async (req, res) => {
 }
 
 const actualizarMedicamentos = async (req, res) => {
-    let { nombreMedicamento, descripcion, precio, idCategoria } = req.body;
+    let { nombreMedicamento, descripcion, porcentajeGanancia, idCategoria } = req.body;
     const { id } = req.params;
     const errores = {};
 
@@ -115,25 +112,28 @@ const actualizarMedicamentos = async (req, res) => {
         const campos = { nombreMedicamento, descripcion, idCategoria };
 
         for (const campo in campos) {
+
             if (campos[campo] !== undefined) {
-                if (campos[campo].trim() === "") {
-                    errores[campo] = `El campo ${campo} no puede estar vacío`;
+                const valor = String(campos[campo]).trim();
+                if (valor === "") {
+                    errores[campo] =
+                        `El campo ${campo} no puede estar vacío`;
                 } else {
-                    updates[campo] = campos[campo].trim();
+                    updates[campo] = valor;
                 }
             }
         }
 
         // VALIDAR SOLO SI PRECIO FUE ENVIADO
-        if (precio !== undefined) {
-            const regexPrecio = /^[0-9]+(\.[0-9]{1,2})?$/;
+        if (porcentajeGanancia !== undefined) {
+            const regexGanancia = /^[0-9]+(\.[0-9]{1,2})?$/;
 
-            if (precio === "" || !regexPrecio.test(precio)) {
-                errores.precio = "El precio debe ser un número válido (solo números, máximo 2 decimales).";
-            } else if (Number(precio) <= 0) {
-                errores.precio = "El precio debe ser mayor que 0.";
+            if (porcentajeGanancia === "" || !regexGanancia.test(porcentajeGanancia)) {
+                errores.porcentajeGanancia = "Porcentaje ganancia debe ser un número válido (solo números, máximo 2 decimales).";
+            } else if (Number(porcentajeGanancia) <= 0) {
+                errores.porcentajeGanancia = "Porcentaje ganancia debe ser mayor que 0.";
             } else {
-                updates.precio = Number(precio);
+                updates.porcentajeGanancia = Number(porcentajeGanancia);
             }
         }
 
@@ -153,7 +153,7 @@ const actualizarMedicamentos = async (req, res) => {
         );
 
         const [updated] = await pool.query(
-            "SELECT idMedicamento, nombreMedicamento, descripcion, precio, idCategoria FROM medicamentos WHERE idMedicamento = ?",
+            "SELECT idMedicamento, nombreMedicamento, descripcion, porcentajeGanancia, idCategoria FROM medicamentos WHERE idMedicamento = ?",
             [id]
         );
 
@@ -173,11 +173,11 @@ const cambiarEstado = async (req, res) => {
     const { estado } = req.body;
 
     //Validacion
-    const estadosValidos = ['Disponible', 'No Disponible'];
+    const estadosValidos = ['Activo', 'Inactivo'];
     if (!estadosValidos.includes(estado)) {
         return res.status(400).json({
             ok: false,
-            message: "El estado debe ser 'Disponible' o 'No Disponible'"
+            message: "El estado debe ser 'Activo' o 'Inactivo'"
         });
     }
     try {
@@ -217,18 +217,18 @@ const obtenerTotalMedicamentos = async (req, res) => {
     }
 }
 
-const obtenerTotalStockMedicamentos = async (req,res) => {
+const obtenerTotalStockMedicamentos = async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT IFNULL (SUM(stock), 0) AS stockTotal FROM medicamentos;");
         res.json({
             stockTotal: rows[0].stockTotal
         });
-    } catch(error){
-        res.status(500).json({ error: "Error al obtener total stock medicamentos"});
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener total stock medicamentos" });
     }
 }
 
-const obtenerCategorias = async (req,res) => {
+const obtenerCategorias = async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT idCategoria, categoria FROM categorias");
         res.status(200).json(rows)
@@ -241,4 +241,4 @@ const obtenerCategorias = async (req,res) => {
 
 
 
-module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos,registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos, obtenerTotalStockMedicamentos, obtenerCategorias};
+module.exports = { obtenerMedicamentos, obtenerMedicamentosPorId, buscarMedicamentos, registrarMedicamentos, actualizarMedicamentos, cambiarEstado, obtenerTotalMedicamentos, obtenerTotalStockMedicamentos, obtenerCategorias };
