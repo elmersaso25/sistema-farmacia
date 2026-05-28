@@ -34,13 +34,13 @@ function Medicamentos() {
           <i className="fa-solid fa-pen-to-square"></i>
         </Link>
         <Link
-          className={`btn btn-sm ${row.estado === "Disponible" ? "btn-danger" : "btn-success"
+          className={`btn btn-sm ${row.estado === "Activo" ? "btn-danger" : "btn-success"
             }`}
           to="#"
           onClick={() => cambiarEstado(row.idMedicamento)}
           title="Cambiar estado"
         >
-          {row.estado === "Disponible" ? <BsX size={20} /> : <BsCheck size={20} />}
+          {row.estado === "Activo" ? <BsX size={20} /> : <BsCheck size={20} />}
         </Link>
 
       </div>
@@ -95,7 +95,7 @@ function Medicamentos() {
     const medicamento = medicamentos.find(m => m.idMedicamento === idMedicamento);
     if (!idMedicamento) return;
 
-    const nuevoEstado = medicamento.estado === "Disponible" ? "No Disponible" : "Disponible";
+    const nuevoEstado = medicamento.estado === "Activo" ? "Inactivo" : "Activo";
 
     // Confirmación con SweetAlert
     const result = await Swal.fire({
