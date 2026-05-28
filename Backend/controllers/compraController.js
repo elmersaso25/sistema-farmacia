@@ -176,26 +176,44 @@ const registrarCompras = async (req, res) => {
                 "UPDATE medicamentos SET stock = stock + ? WHERE idMedicamento = ?",
                 [item.cantidad, item.idMedicamento]
             );
+
+            // Obtener porcentaje ganancia
+            const [medicamento] = await connection.query(
+                "SELECT porcentajeGanancia FROM medicamentos WHERE idMedicamento = ?",
+                [item.idMedicamento]
+            );
+
+            const porcentajeGanancia = Number(medicamento[0].porcentajeGanancia);
+
+            const precioVenta = Number(
+                (item.precio * (1 + porcentajeGanancia / 100)).toFixed(2)
+            );
+
+            // ===== ACTUALIZAR PRECIO DEL MEDICAMENTO =====
+            await connection.query(
+                "UPDATE medicamentos SET precio = ? WHERE idMedicamento = ?",
+                [precioVenta, item.idMedicamento]
+            );
         }
 
         await connection.commit();
 
-        res.status(201).json({
-            mensaje: 'Compra registrada correctamente',
-            noCompra,
-            noFactura,
-            totalCompra
-        });
+    res.status(201).json({
+        mensaje: 'Compra registrada correctamente',
+        noCompra,
+        noFactura,
+        totalCompra
+    });
 
-    } catch (error) {
-        await connection.rollback();
-        res.status(400).json({
-            mensaje: 'Error al registrar la compra',
-            error: error.message
-        });
-    } finally {
-        connection.release();
-    }
+} catch (error) {
+    await connection.rollback();
+    res.status(400).json({
+        mensaje: 'Error al registrar la compra',
+        error: error.message
+    });
+} finally {
+    connection.release();
+}
 };
 
 
@@ -267,21 +285,21 @@ const anularCompra = async (req, res) => {
             [id]);
 
 
-            // 🔒 VALIDAR ANTES DE TOCAR STOCK
-for (const detalle of detalles) {
-    const [ventas] = await connection.query(`
+        // 🔒 VALIDAR ANTES DE TOCAR STOCK
+        for (const detalle of detalles) {
+            const [ventas] = await connection.query(`
         SELECT SUM(cantidad) as totalVendida
         FROM detalleVentas
         WHERE idProducto = ?
     `, [detalle.idMedicamento]);
 
-    if (ventas[0].totalVendida && ventas[0].totalVendida > 0) {
-        await connection.rollback();
-        return res.status(400).json({
-            message: "No se puede anular la compra, ya se han vendido productos asociados"
-        });
-    }
-}
+            if (ventas[0].totalVendida && ventas[0].totalVendida > 0) {
+                await connection.rollback();
+                return res.status(400).json({
+                    message: "No se puede anular la compra, ya se han vendido productos asociados"
+                });
+            }
+        }
 
         for (const detalle of detalles) {
             await connection.query("UPDATE medicamentos SET stock = stock - ? WHERE idMedicamento = ?",
@@ -405,7 +423,7 @@ const generarPDFCompra = async (req, res) => {
         doc.fontSize(13).text("DETALLE DE PRODUCTOS");
         doc.moveDown();
 
-         const tableTop = doc.y;
+        const tableTop = doc.y;
 
         doc
             .font("Helvetica-Bold")
