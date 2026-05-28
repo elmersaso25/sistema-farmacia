@@ -8,7 +8,7 @@ function RegistrarMedicamentos() {
     const [formData, setFormData] = useState({
         nombreMedicamento: "",
         descripcion: "",
-        precio: "",
+        ganancia: "",
         categoria: ""
     });
     const [categorias, setCategorias] = useState([]);
@@ -50,7 +50,7 @@ function RegistrarMedicamentos() {
                 setFormData({
                     nombreMedicamento: "",
                     descripcion: "",
-                    precio: "",
+                    ganancia: "",
                     categoria: "",
                 });
             }
@@ -142,11 +142,11 @@ function RegistrarMedicamentos() {
                             </div>
 
                             <div className="row mb-3 align-items-center">
-                                <label className="col-sm-4 col-form-label">Precio</label>
+                                <label className="col-sm-4 col-form-label">Porcentaje Ganancia</label>
                                 <div className="col-sm-8">
                                     <input type="text"
-                                        name="precio"
-                                        value={formData.precio}
+                                        name="ganancia"
+                                        value={formData.ganancia}
                                         onChange={handleChange}
                                         className="form-control"
                                         step="0.01"

@@ -10,11 +10,12 @@ function ModificarMedicamentos() {
     const [formData, setFormData] = useState({
         nombreMedicamento: "",
         descripcion: "",
-        precio: "",
+        porcentaje: "",
         categoria: ""
     });
 
     const [errores, setErrores] = useState({});
+    const [categorias, setCategorias] = useState([]);
 
     const handleChange = (e) => {
         setFormData({
@@ -35,8 +36,8 @@ function ModificarMedicamentos() {
                 setFormData({
                     nombreMedicamento: data.nombreMedicamento,
                     descripcion: data.descripcion,
-                    precio: data.precio,
-                    categoria: data.categoria
+                    porcentaje: data.porcentajeGanancia,
+                    categoria: data.idCategoria
                 })
 
 
@@ -48,14 +49,26 @@ function ModificarMedicamentos() {
         obtenerMedicamento();
     }, [id]);
 
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/medicamentos/categorias`)
+            .then(res => res.json())
+            .then(data => setCategorias(data))
+            .catch(err => console.error(err));
+    }, []);
+
     // ------------------------------
     // ACTUALIZAR MEDICAMENTO    
     // ------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const data = { ...formData };
-
+        const data = {
+            nombreMedicamento: formData.nombreMedicamento,
+            descripcion: formData.descripcion,
+            porcentajeGanancia: formData.porcentaje,
+            idCategoria: formData.categoria
+        };
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/medicamentos/actualizar/${id}`, {
@@ -76,9 +89,10 @@ function ModificarMedicamentos() {
                 title: "Actualización exitosa",
                 text: "El medicamento fue actualizado correctamente.",
                 showConfirmButton: false,
-                timer: 2000}).then(() =>{
-                    navigate("/medicamentos");
-                });
+                timer: 2000
+            }).then(() => {
+                navigate("/medicamentos");
+            });
             setErrores("");
 
         }
@@ -132,12 +146,12 @@ function ModificarMedicamentos() {
                             </div>
 
                             <div className="row mb-3 align-items-center">
-                                <label className="col-sm-4 col-form-label">Precio</label>
+                                <label className="col-sm-4 col-form-label">Porcentaje Ganancia %</label>
                                 <div className="col-sm-8">
                                     <input type="text"
-                                        value={formData.precio}
+                                        value={formData.porcentaje}
                                         onChange={handleChange}
-                                        name="precio"
+                                        name="porcentaje"
                                         className="form-control"
                                         required
                                     />
@@ -150,13 +164,23 @@ function ModificarMedicamentos() {
                             <div className="row mb-3 align-items-center">
                                 <label className="col-sm-4 col-form-label">Categoría</label>
                                 <div className="col-sm-8">
-                                    <input type="text"
+                                    <select
                                         value={formData.categoria}
                                         onChange={handleChange}
                                         name="categoria"
-                                        className="form-control"
+                                        className="form-select"
                                         required
-                                    />
+                                    >
+                                        <option value="">Seleccione una categoría</option>
+                                        {categorias.map((categoria) => (
+                                            <option
+                                                key={categoria.idCategoria}
+                                                value={categoria.idCategoria}
+                                            >
+                                                {categoria.categoria}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             <div className="text-center">
