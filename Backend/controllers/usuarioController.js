@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 //Funcion obtener usuario
 const obtenerUsuarios = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT idUsuario,nombreCompleto,celular,correo,estado,fechaRegistro FROM usuarios;");
+        const [rows] = await pool.query("SELECT u.idUsuario,u.nombreCompleto,u.celular,u.correo,u.estado,r.nombreRol,u.fechaRegistro FROM usuarios u JOIN roles r ON u.idRol = r.idRol;");
         res.status(200).json(rows);
 
     } catch (error) {
@@ -18,7 +18,7 @@ const obtenerUsuariosPorId = async (req, res) => {
     const { id } = req.params
 
     try {
-        const [rows] = await pool.query("SELECT idUsuario, nombreCompleto,celular,correo,estado FROM usuarios WHERE idUsuario = ?", [id]);
+        const [rows] = await pool.query("SELECT u.idUsuario, u.nombreCompleto,u.celular,u.correo,u.estado, u.idRol FROM usuarios u WHERE u.idUsuario = ?", [id]);
         // Si no existe el usuario
         if (rows.length === 0) {
             return res.status(404).json({ mensaje: "Usuario no encontrado" });
@@ -35,12 +35,12 @@ const obtenerUsuariosPorId = async (req, res) => {
 
 //Funcion registrar usuarios
 const registrarUsuarios = async (req, res) => {
-    const { nombreCompleto, celular, correo, contrasenia } = req.body;
+    const { nombreCompleto, celular, correo, contrasenia, idRol } = req.body;
     const errores = {};
 
     try {
         //Validacion todos los campos son obligatorios
-        if (!nombreCompleto || !celular || !correo || !contrasenia) {
+        if (!nombreCompleto || !celular || !correo || !contrasenia || idRol === undefined || idRol === null) {
             return res.status(400).json({
                 errores: { general: "Todos los campos son obligatorios" }
             });
@@ -70,6 +70,15 @@ const registrarUsuarios = async (req, res) => {
             errores.correo = "El correo electrónico ya está registrado";
         }
 
+        const [rolExiste] = await pool.query(
+            "SELECT idRol FROM roles WHERE idRol = ?",
+            [idRol]
+        );
+
+        if (rolExiste.length === 0) {
+            errores.idRol = "Rol inválido";
+        }
+
         // Si hay errores, devolverlos todos
         if (Object.keys(errores).length > 0) {
             return res.status(400).json({ errores });
@@ -78,8 +87,8 @@ const registrarUsuarios = async (req, res) => {
         const contraseniaHash = await bcrypt.hash(contrasenia, 10);
 
         await pool.query(
-            "INSERT INTO usuarios(nombreCompleto,celular,correo,contrasenia) VALUES(?,?,?,?)",
-            [nombreCompleto, celular, correo, contraseniaHash]);
+            "INSERT INTO usuarios(nombreCompleto,celular,correo,contrasenia,idRol) VALUES(?,?,?,?,?)",
+            [nombreCompleto, celular, correo, contraseniaHash, idRol]);
 
         res.status(201).json({ mensaje: "Usuario registrado correctamente" });
 
@@ -91,7 +100,7 @@ const registrarUsuarios = async (req, res) => {
 }
 
 const actualizarUsuarios = async (req, res) => {
-    const { nombreCompleto, correo, celular, contrasenia } = req.body;
+    const { nombreCompleto, correo, celular, contrasenia, idRol } = req.body;
     const { id } = req.params;
     const errores = {};
 
@@ -106,22 +115,20 @@ const actualizarUsuarios = async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-       
-
         // 2. Crear objeto dinámico
         let updates = {};
 
         const campos = { nombreCompleto, correo };
 
         for (const campo in campos) {
-    if (campos[campo] !== undefined) {
-        if (campos[campo].trim() === "") {
-            errores[campo] = `El campo ${campo} no puede estar vacío`;
-        } else {
-            updates[campo] = campos[campo].trim();
+            if (campos[campo] !== undefined) {
+                if (campos[campo].trim() === "") {
+                    errores[campo] = `El campo ${campo} no puede estar vacío`;
+                } else {
+                    updates[campo] = campos[campo].trim();
+                }
+            }
         }
-    }
-}
 
 
 
@@ -143,9 +150,20 @@ const actualizarUsuarios = async (req, res) => {
 
         // Validación celular
         const regexCelular = /^[0-9]{8}$/;
+        if (celular !== undefined) {
+            if (!regexCelular.test(celular)) {
+                errores.celular = "El número de celular debe tener 8 dígitos";
+            } else {
+                updates.celular = celular;
+            }
+        }
 
-        if (celular && !regexCelular.test(celular)) {
-            errores.celular = "El número de celular debe tener 8 dígitos";
+        if (idRol !== undefined) {
+            if (!Number.isInteger(Number(idRol)) || Number(idRol) <= 0) {
+                errores.idRol = "El rol enviado no es válido";
+            } else {
+                updates.idRol = Number(idRol);
+            }
         }
 
         // 📌 Si hay errores de validación, devolverlos todos juntos
@@ -158,6 +176,7 @@ const actualizarUsuarios = async (req, res) => {
             return res.status(400).json({ message: "No hay datos para actualizar" });
         }
 
+        console.log("updates:", updates);
         // 6. Actualizar usuario
         await pool.query(
             "UPDATE usuarios SET ? WHERE idUsuario = ?",
@@ -166,7 +185,7 @@ const actualizarUsuarios = async (req, res) => {
 
         // 7. Obtener usuario actualizado
         const [updatedUser] = await pool.query(
-            "SELECT idUsuario, nombreCompleto, correo, celular FROM usuarios WHERE idUsuario = ?",
+            "SELECT idUsuario, nombreCompleto, correo, celular, idRol FROM usuarios WHERE idUsuario = ?",
             [id]
         );
 
@@ -225,18 +244,29 @@ const cambiarEstado = async (req, res) => {
     }
 }
 
-const obtenerTotalUsuarios = async (req, res) =>{
-    try{
+const obtenerTotalUsuarios = async (req, res) => {
+    try {
         const [rows] = await pool.query("SELECT COUNT(*) AS totalUsuarios FROM usuarios;");
         res.json({
             totalUsuarios: rows[0].totalUsuarios
         });
-    }catch(error){
-            res.status(500).json({ error: "Error al obtener el total de usuarios" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener el total de usuarios" });
 
+    }
+}
+
+//Funcion para mostrar rol de usuario
+const obtenerRoles = async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT idRol, nombreRol FROM roles;");
+        res.status(200).json(rows);
+
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener roles de usuarios"});
     }
 }
 
 
 
-module.exports = { obtenerUsuarios, obtenerUsuariosPorId, registrarUsuarios, actualizarUsuarios, cambiarEstado, obtenerTotalUsuarios };
+module.exports = { obtenerUsuarios, obtenerUsuariosPorId, registrarUsuarios, actualizarUsuarios, cambiarEstado, obtenerTotalUsuarios, obtenerRoles };
