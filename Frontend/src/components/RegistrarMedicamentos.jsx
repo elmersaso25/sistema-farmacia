@@ -171,7 +171,6 @@ function RegistrarMedicamentos() {
                                         className="form-select"
                                         required
                                     >
-
                                         <option value="">
                                             Seleccione categoría
                                         </option>
