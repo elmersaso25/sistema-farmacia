@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 
 function RegistrarUsuarios() {
     const navigate = useNavigate();
-
+    
     const [formData, setFormData] = useState({
         nombreCompleto: "",
         celular: "",
         correo: "",
-        contrasenia: ""
+        contrasenia: "",
+        idRol: ""
     });
+
+    const [roles,setRoles] = useState([]);
 
     const [mensaje, setMensaje] = useState("");
     const [errores, setErrores] = useState({});
@@ -23,80 +26,88 @@ function RegistrarUsuarios() {
     };
 
     const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMensaje("");
-  setErrores({}); // Limpia errores anteriores
+        e.preventDefault();
+        setMensaje("");
+        setErrores({}); // Limpia errores anteriores
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/registrar`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/registrar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
 
-    const data = await res.json();
+            const data = await res.json();
 
-    if (res.ok) {
-      setErrores({});
-      Swal.fire({
-        icon: "success",
-        title: "Registro exitoso",
-        text: "El usuario fue registrado correctamente.",
-        showConfirmButton: false,
-        timer: 2000,
-      }).then(() =>{
-        navigate("/usuarios");
-      });
+            if (res.ok) {
+                setErrores({});
+                Swal.fire({
+                    icon: "success",
+                    title: "Registro exitoso",
+                    text: "El usuario fue registrado correctamente.",
+                    showConfirmButton: false,
+                    timer: 2000,
+                }).then(() => {
+                    navigate("/usuarios");
+                });
 
-      setFormData({
-        nombreCompleto: "",
-        celular: "",
-        correo: "",
-        contrasenia: "",
-      });
-    } 
-    // 🔹 Si el backend devuelve varios errores
-    else if (data.errores) {
-      if (data.errores.general) {
-        Swal.fire({
-          icon: "warning",
-          title: "Upss... Algo salió mal",
-          text: data.errores.general,
-          confirmButtonText: "Entendido",
-        });
-      }
+                setFormData({
+                    nombreCompleto: "",
+                    celular: "",
+                    correo: "",
+                    contrasenia: "",
+                    idRol: ""
+                });
+            }
+            // 🔹 Si el backend devuelve varios errores
+            else if (data.errores) {
+                if (data.errores.general) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Upss... Algo salió mal",
+                        text: data.errores.general,
+                        confirmButtonText: "Entendido",
+                    });
+                }
 
-      // Muestra errores específicos bajo los inputs
-      setErrores({
-        celular: data.errores.celular || "",
-        contrasenia: data.errores.contrasenia || "",
-        correo: data.errores.correo || ""
-      });
-    } 
-    // 🔹 Si el backend solo devuelve un mensaje simple (sin objeto "errores")
-    else {
-      if (data.mensaje?.toLowerCase().includes("contraseña")) {
-        setErrores({ contrasenia: data.mensaje });
-      } else if (data.mensaje?.toLowerCase().includes("celular")) {
-        setErrores({ celular: data.mensaje });
-      } else if(data.mensaje?.toLowerCase().includes("correo")){
+                // Muestra errores específicos bajo los inputs
+                setErrores({
+                    celular: data.errores.celular || "",
+                    contrasenia: data.errores.contrasenia || "",
+                    correo: data.errores.correo || ""
+                });
+            }
+            // 🔹 Si el backend solo devuelve un mensaje simple (sin objeto "errores")
+            else {
+                if (data.mensaje?.toLowerCase().includes("contraseña")) {
+                    setErrores({ contrasenia: data.mensaje });
+                } else if (data.mensaje?.toLowerCase().includes("celular")) {
+                    setErrores({ celular: data.mensaje });
+                } else if (data.mensaje?.toLowerCase().includes("correo")) {
 
-        
-      } else {
-        Swal.fire("Error", data.mensaje || "No se pudo registrar", "error");
-      }
-    }
 
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error de conexión",
-      text: "No se pudo conectar con el servidor.",
-      confirmButtonText: "Aceptar",
-    });
-    console.error(error);
-  }
-};
+                } else {
+                    Swal.fire("Error", data.mensaje || "No se pudo registrar", "error");
+                }
+            }
+
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error de conexión",
+                text: "No se pudo conectar con el servidor.",
+                confirmButtonText: "Aceptar",
+            });
+            console.error(error);
+        }
+    };
+
+     useEffect(() => {
+            fetch(`${import.meta.env.VITE_API_URL}/usuarios/roles`)
+                .then(res => res.json())
+                .then(data => setRoles(data))
+                .catch(err => console.error(err));
+        }, []);
 
     return (
 
@@ -106,7 +117,7 @@ function RegistrarUsuarios() {
                 <button className="btn btn-danger" onClick={() => navigate("/usuarios")}>Regresar</button>
             </div>
 
-            <div className="d-flex justify-content-center py-3 ">
+            <div className="d-flex justify-content-center py-2 ">
 
                 <div className="card shadow-sm" style={{ width: "45rem" }}>
 
@@ -151,9 +162,9 @@ function RegistrarUsuarios() {
                                         onChange={handleChange}
                                         className="form-control"
                                         required />
-                                         {errores.correo && (
+                                    {errores.correo && (
                                         <small className="text-danger">{errores.correo}</small>
-                                    )}   
+                                    )}
                                 </div>
                             </div>
 
@@ -171,7 +182,26 @@ function RegistrarUsuarios() {
                                     )}
                                 </div>
                             </div>
-
+                            <div className="row mb-3 align-items-center">
+                                <label className="col-sm-4 col-form-label">Rol de Usuario</label>
+                                <div className="col-sm-8">
+                                    <select name="idRol"
+                                        id="idRol" className="form-select"
+                                        value={formData.idRol}
+                                        onChange={handleChange}
+                                        required>
+                                        <option value="" >Seleccione Rol de usuario</option>
+                                            {roles.map((cat) => (
+                                            <option
+                                                key={cat.idRol}
+                                                value={cat.idRol}
+                                            >
+                                                {cat.nombreRol}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                             <div className="text-center">
                                 <button className="btn btn-primary">Registrar</button>
                             </div>

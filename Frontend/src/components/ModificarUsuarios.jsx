@@ -11,9 +11,11 @@ function ModificarUsuarios() {
         nombreCompleto: "",
         celular: "",
         correo: "",
-        contrasenia: ""
+        contrasenia: "",
+        idRol: ""
     });
 
+    const [roles, setRoles] = useState([]);
     const [mensaje, setMensaje] = useState("");
     const [errores, setErrores] = useState({});
 
@@ -33,12 +35,14 @@ function ModificarUsuarios() {
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${id}`);
                 const data = await res.json();
 
+                console.log("Usuario:", data);
                 // NO cargar la contraseña encriptada
                 setFormData({
                     nombreCompleto: data.nombreCompleto,
                     celular: data.celular,
                     correo: data.correo,
-                    contrasenia: "" // siempre vacía para evitar enviar hash
+                    contrasenia: "", // siempre vacía para evitar enviar hash
+                    idRol: data.idRol
                 });
             }
             catch (error) {
@@ -72,10 +76,10 @@ function ModificarUsuarios() {
 
             const data = await response.json().catch(() => ({}));
 
-           if (!response.ok) {
-            setErrores(data.errores); 
-            return;
-        }
+            if (!response.ok) {
+                setErrores(data.errores);
+                return;
+            }
 
             Swal.fire({
                 icon: "success",
@@ -83,7 +87,7 @@ function ModificarUsuarios() {
                 text: "El usuario fue actualizado correctamente.",
                 showConfirmButton: false,
                 timer: 2000
-            }).then(() =>{
+            }).then(() => {
                 navigate("/usuarios");
             });
             setErrores("");
@@ -94,6 +98,17 @@ function ModificarUsuarios() {
         }
     };
 
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/usuarios/roles`)
+            .then(res => res.json())
+            .then(data => setRoles(data))
+            .catch(err => console.error(err));
+    }, []);
+
+    console.log("formData.idRol:", formData.idRol);
+    console.log("roles:", roles);
+
+
     return (
         <div className="container">
             <div className="p-4">
@@ -101,7 +116,7 @@ function ModificarUsuarios() {
                 <button className="btn btn-danger" onClick={() => navigate("/usuarios")}>Regresar</button>
             </div>
 
-            <div className="d-flex justify-content-center bg-light py-3 ">
+            <div className="d-flex justify-content-center bg-light py-2 ">
                 <div className="card shadow-sm" style={{ width: "45rem" }}>
                     <div className="card-body">
                         <div className="mb-3">
@@ -150,7 +165,6 @@ function ModificarUsuarios() {
                                     />
                                 </div>
                             </div>
-
                             <div className="row mb-3 align-items-center">
                                 <label className="col-sm-4 col-form-label">Contraseña</label>
                                 <div className="col-sm-8">
@@ -160,12 +174,31 @@ function ModificarUsuarios() {
                                         onChange={handleChange}
                                         className="form-control"
                                     />
-                                     {errores.contrasenia && (
+                                    {errores.contrasenia && (
                                         <small className="text-danger">{errores.contrasenia}</small>
                                     )}
                                 </div>
                             </div>
-
+                            <div className="row mb-3 align-items-center">
+                                <label className="col-sm-4 col-form-label">Rol de Usuario</label>
+                                <div className="col-sm-8">
+                                    <select name="idRol"
+                                        id="idRol" className="form-select"
+                                        value={formData.idRol}
+                                        onChange={handleChange}
+                                        required>
+                                        <option value="" >Seleccione Rol de usuario</option>
+                                        {roles.map((cat) => (
+                                            <option
+                                                key={cat.idRol}
+                                                value={cat.idRol}
+                                            >
+                                                {cat.nombreRol}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                             <div className="text-center">
                                 <button className="btn btn-primary">Actualizar</button>
                             </div>
