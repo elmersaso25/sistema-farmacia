@@ -27,7 +27,7 @@ function Usuarios() {
 
   const columns = [
     { name: "ID", selector: (row) => row.idUsuario, sortable: true },
-    { name: "Nombre Completo", selector: (row) => row.nombreCompleto, sortable: true, width: "270px", wrap: false },
+    { name: "Nombre Completo", selector: (row) => row.nombreCompleto, sortable: true, width: "250px", wrap: false },
     { name: "Celular", selector: (row) => row.celular },
     {
       name: "Correo Electrónico", selector: (row) => row.correo, sortable: true, width: "250px", wrap: false
@@ -35,7 +35,10 @@ function Usuarios() {
 
     { name: "Estado", selector: (row) => row.estado, sortable: true, width: "100px", wrap: false },
 
-    { name: "Fecha de Registro", selector: (row) => formatearFecha(row.fechaRegistro), sortable: true, width: "200px", wrap: false },
+    { name: "Rol", selector: (row) => row.nombreRol, sortable: true, width: "130px", wrap: false },
+
+
+    { name: "Se registró", selector: (row) => formatearFecha(row.fechaRegistro), sortable: true, width: "150px", wrap: false },
     {
       name: "Acciones", cell: (row) => <div style={{ display: "flex", gap: "6px" }}>
         <Link className="btn btn-sm btn-warning" to={`/modificarUsuarios/${row.idUsuario}`} title="Modificar registro">
@@ -98,57 +101,57 @@ function Usuarios() {
   };
 
   //Funcion cambiar estado
-const cambiarEstado = async (idUsuario) => {
-  const usuario = usuarios.find(u => u.idUsuario === idUsuario);
-  if (!usuario) return;
+  const cambiarEstado = async (idUsuario) => {
+    const usuario = usuarios.find(u => u.idUsuario === idUsuario);
+    if (!usuario) return;
 
-  const nuevoEstado = usuario.estado === "Activo" ? "Inactivo" : "Activo";
+    const nuevoEstado = usuario.estado === "Activo" ? "Inactivo" : "Activo";
 
-  // Confirmación con SweetAlert
-  const result = await Swal.fire({
-    title: "¿Estás seguro?",
-    text: `El usuario pasará a estado: ${nuevoEstado}`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Sí, cambiar",
-    cancelButtonText: "Cancelar"
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/estado`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: nuevoEstado })
+    // Confirmación con SweetAlert
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: `El usuario pasará a estado: ${nuevoEstado}`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, cambiar",
+      cancelButtonText: "Cancelar"
     });
 
-    if (!response.ok) throw new Error("Error al cambiar estado");
+    if (!result.isConfirmed) return;
 
-    // Actualiza react localmente
-    setUsuarios(prev =>
-      prev.map(u =>
-        u.idUsuario === idUsuario ? { ...u, estado: nuevoEstado } : u
-      )
-    );
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/estado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: nuevoEstado })
+      });
 
-    Swal.fire({
-      icon: "success",
-      title: "Estado actualizado",
-      text: `El usuario ahora está ${nuevoEstado}`,
-      timer: 1500,
-      showConfirmButton: false
-    });
+      if (!response.ok) throw new Error("Error al cambiar estado");
 
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo cambiar el estado"
-    });
-  }
-};
+      // Actualiza react localmente
+      setUsuarios(prev =>
+        prev.map(u =>
+          u.idUsuario === idUsuario ? { ...u, estado: nuevoEstado } : u
+        )
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Estado actualizado",
+        text: `El usuario ahora está ${nuevoEstado}`,
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cambiar el estado"
+      });
+    }
+  };
 
   // ✅ Render del componente
   return (
