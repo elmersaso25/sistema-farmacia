@@ -10,12 +10,13 @@ const login = async (req, res) => {
 
   try {
     // Buscar al usuario por correo
-    const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [correo]);
+    const [rows] = await pool.query("SELECT u.idUsuario,u.nombreCompleto,u.celular,u.correo,u.contrasenia,u.estado,r.nombreRol FROM usuarios u JOIN roles r ON u.idRol = r.idRol WHERE correo = ?", [correo]);
     if (rows.length === 0) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
     const usuario = rows[0];
+    console.log(usuario);
 
     // Verificar si el usuario está inactivo
     if (usuario.estado !== "Activo") {
@@ -35,7 +36,8 @@ const login = async (req, res) => {
     const token = jwt.sign(
       {
         idUsuario: usuario.idUsuario,
-        nombreCompleto: usuario.nombreCompleto
+        nombreCompleto: usuario.nombreCompleto,
+        rol: usuario.nombreRol
       },
       SECRET_KEY,
       { expiresIn: '1h' } // El token expirará en 1 hora
@@ -45,6 +47,7 @@ const login = async (req, res) => {
     res.json({
       mensaje: 'Login exitoso',
       usuario: usuario.nombreCompleto,
+      rol: usuario.nombreRol,
       token
     });
 
