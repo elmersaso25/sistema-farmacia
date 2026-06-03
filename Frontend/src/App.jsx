@@ -19,6 +19,7 @@ import Compras from './components/Compras';
 import RegistrarCompras from './components/RegistrarCompras';
 import Ventas from './components/Ventas';
 import RegistrarVentas from './components/RegistrarVentas';
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   const location = useLocation(); // Obtén la ubicación actual
@@ -33,27 +34,28 @@ function App() {
       {/* Rutas */}
       <Routes>
         <Route path="/" element={<Login />} />
-        
+
         <Route path="/panelPrincipal"
           element={
             <ProtectedRoute>
               <PanelPrincipal />
             </ProtectedRoute>
           } />
+
         <Route path="/usuarios" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <Usuarios />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         <Route path="/registrarUsuarios" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <RegistrarUsuarios />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         <Route path="/modificarUsuarios/:id" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <ModificarUsuarios />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         <Route path="/medicamentos" element={
           <ProtectedRoute>
@@ -62,22 +64,22 @@ function App() {
         }
         />
         <Route path="/registrarMedicamentos" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <RegistrarMedicamentos />
-          </ProtectedRoute>
+          </AdminRoute>
         }
         />
         <Route path="/modificarMedicamentos/:id" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <ModificarMedicamentos />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         <Route path="/clientes" element={
           <ProtectedRoute>
             <Clientes />
           </ProtectedRoute>
         } />
-         <Route path="/registrarClientes" element={
+        <Route path="/registrarClientes" element={
           <ProtectedRoute>
             <RegistrarClientes />
           </ProtectedRoute>
@@ -89,36 +91,36 @@ function App() {
           </ProtectedRoute>
         } />
 
-         <Route path="/proveedores" element={
-          <ProtectedRoute>
+        <Route path="/proveedores" element={
+          <AdminRoute>
             <Proveedores />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
 
         <Route path="/registrarProveedores" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <RegistrarProveedores />
-          </ProtectedRoute>
+          </AdminRoute>
         }
         />
 
         <Route path="/modificarProveedores/:id" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <ModificarProveedores />
-          </ProtectedRoute>
+          </AdminRoute>
         }
         />
 
-         <Route path="/compras" element={
-          <ProtectedRoute>
+        <Route path="/compras" element={
+          <AdminRoute>
             <Compras />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
 
         <Route path="/registrarCompras" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <RegistrarCompras />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
 
         <Route path="/ventas" element={
