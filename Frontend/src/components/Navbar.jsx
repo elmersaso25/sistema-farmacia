@@ -4,7 +4,8 @@ import "../styles/Navbar.css"
 function Navbar() {
 
   const navigate = useNavigate();
-  
+  const rol = localStorage.getItem("rol")
+
   const cerrarSesion = () => {
 
     localStorage.removeItem('token');
@@ -20,16 +21,18 @@ function Navbar() {
           </a>
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav mx-auto">
-               <li className="nav-item">
+              <li className="nav-item">
                 <Link className="nav-link text-white" to="/panelPrincipal">
                   <i className="fas fa-tachometer-alt"></i> Panel Principal
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/usuarios">
-                  <i className="fa fa-users"></i> Usuarios
-                </Link>
-              </li>
+              {rol === "Administrador" && (
+                <li className="nav-item">
+                  <Link className="nav-link text-white" to="/usuarios">
+                    <i className="fa fa-users"></i> Usuarios
+                  </Link>
+                </li>
+              )}
               <li className="nav-item">
                 <Link className="nav-link text-white" to="/medicamentos" >
                   <i className="fas fa-pills"></i> Medicamentos
@@ -40,16 +43,21 @@ function Navbar() {
                   <i className="fa-solid fa-user-tag"></i> Clientes
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/proveedores">
-                  <i className="fas fa-truck"></i> Proveedores
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/compras">
-                  <i className="fas fa-shopping-bag"></i> Compras
-                </Link>
-              </li>
+              {rol === "Administrador" && (
+                <li className="nav-item">
+                  <Link className="nav-link text-white" to="/proveedores">
+                    <i className="fas fa-truck"></i> Proveedores
+                  </Link>
+                </li>
+              )}
+              {rol === "Administrador" && (
+
+                <li className="nav-item">
+                  <Link className="nav-link text-white" to="/compras">
+                    <i className="fas fa-shopping-bag"></i> Compras
+                  </Link>
+                </li>
+              )}
               <li className="nav-item">
                 <Link className="nav-link text-white" to="/ventas">
                   <i className="fas fa-tag"></i> Ventas
@@ -57,8 +65,8 @@ function Navbar() {
               </li>
               <li className="nav-item">
                 <a className="nav-link text-white" href="#" onClick={(e) => {
-                  e.preventDefault(); 
-                  cerrarSesion();    
+                  e.preventDefault();
+                  cerrarSesion();
                 }}>
                   <i className="fas fa-right-from-bracket"></i> Cerrar Sesión
                 </a>
