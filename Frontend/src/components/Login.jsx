@@ -17,53 +17,54 @@ function Login() {
   }, [navigate]);
 
 
- const handleLogin = async (e) => {
-  e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/login/iniciar`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          correo: email,
-          contrasenia: password,
-        }),
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/login/iniciar`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            correo: email,
+            contrasenia: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("rol", data.rol);
+
+        Swal.fire({
+          icon: "success",
+          title: "¡Bienvenido!",
+          text: `Hola, ${data.usuario}`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        navigate("/panelPrincipal", { replace: true });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.mensaje,
+        });
       }
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-      localStorage.setItem("token", data.token);
-
-      Swal.fire({
-        icon: "success",
-        title: "¡Bienvenido!",
-        text: `Hola, ${data.usuario}`,
-        timer: 2000,
-        showConfirmButton: false,
-      });
-
-      navigate("/panelPrincipal",  { replace: true });
-    } else {
+    } catch (error) {
+      console.error("Error al conectar con el backend:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: data.mensaje,
+        text: "No se pudo conectar con el servidor",
       });
     }
-  } catch (error) {
-    console.error("Error al conectar con el backend:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo conectar con el servidor",
-    });
-  }
-};
+  };
 
 
 
