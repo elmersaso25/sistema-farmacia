@@ -11,6 +11,7 @@ function Medicamentos() {
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
   const navigate = useNavigate();
+  const rol = localStorage.getItem("rol")
 
 
 
@@ -28,23 +29,36 @@ function Medicamentos() {
 
     { name: "Estado", selector: (row) => row.estado, sortable: true, width: "95x", wrap: false },
 
-    {
-      name: "Acciones", cell: (row) => <div style={{ display: "flex", gap: "6px" }}>
-        <Link className="btn btn-sm btn-warning" to={`/modificarMedicamentos/${row.idMedicamento}`} title="Modificar registro">
+   {
+  name: "Acciones",
+  cell: (row) =>
+    rol === "Administrador" ? (
+      <div style={{ display: "flex", gap: "6px" }}>
+        <Link
+          className="btn btn-sm btn-warning"
+          to={`/modificarMedicamentos/${row.idMedicamento}`}
+          title="Modificar registro"
+        >
           <i className="fa-solid fa-pen-to-square"></i>
         </Link>
+
         <Link
-          className={`btn btn-sm ${row.estado === "Activo" ? "btn-danger" : "btn-success"
-            }`}
+          className={`btn btn-sm ${
+            row.estado === "Activo" ? "btn-danger" : "btn-success"
+          }`}
           to="#"
           onClick={() => cambiarEstado(row.idMedicamento)}
           title="Cambiar estado"
         >
-          {row.estado === "Activo" ? <BsX size={20} /> : <BsCheck size={20} />}
+          {row.estado === "Activo" ? (
+            <BsX size={20} />
+          ) : (
+            <BsCheck size={20} />
+          )}
         </Link>
-
       </div>
-    }
+    ) : null
+}
   ];
 
 
@@ -146,12 +160,13 @@ function Medicamentos() {
 
 
   return (
-    <div className="container-custom">
+    <div className="container-custom" style={{marginTop:"125px"}}>
+       {rol === "Administrador" && (
       <div className="p-4">
         <h4 className="mb-3">Medicamentos Registrados</h4>
         <button className="btn btn-primary" onClick={() => navigate("/registrarMedicamentos")}>Crear Nuevo</button>
       </div>
-
+       )}
       {/* Buscador */}
       <input
         type="text"
